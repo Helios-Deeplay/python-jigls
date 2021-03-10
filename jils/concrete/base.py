@@ -1,26 +1,22 @@
 class Base:
-    """Concerete base class for all types of nodes and edges"""
+    """Concerete base class for all types of nodes, edges, graph"""
 
     def __init__(
         self,
         # nid: str,
         name: str,
-        dirty: bool,
-        enable: bool,
+        dirty: bool = False,
+        enable: bool = True,
     ):
-        # self.nid = nid
         self.name = name
         self.dirty = dirty
         self.enable = enable
 
-    def isDirty(self) -> bool:
+    def IsDirty(self) -> bool:
         return self.dirty
 
-    def isEnabled(self) -> bool:
+    def IsEnabled(self) -> bool:
         return self.enable
 
-    def setDirty(self, flag: bool):
-        self.dirty = flag
-
-    def setEnable(self, flag=bool):
-        self.enable = flag
+    def SetName(self, value: str):
+        self.name = value

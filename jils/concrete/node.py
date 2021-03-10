@@ -1,7 +1,12 @@
 from __future__ import annotations
-from typing import Any, List, Union
+
+import logging
+from typing import Any, List, Optional, Union
 
 from jils.concrete.base import Base
+from jils.logger import logger
+
+logger = logging.getLogger(__name__)
 
 
 class Node(Base):
@@ -18,33 +23,96 @@ class Node(Base):
     ):
         super().__init__(name=name, dirty=dirty, enable=enable)
 
-        self.connections: List[Node] = []
         self.parent = parent
-        self.value: Any = None
         self.debug = debug
+        self.connections: List[Node] = []
 
     @property
     def type(self):
         return self._type_
 
-    def Connect(self, connections: Union[List[Node], Node]) -> None:
-        if not isinstance(connections, list):
-            connections = [connections]
-        for input in connections:
-            self.connections.append(input)
+    def SetDebug(self, flag: bool):
+        self.debug = flag
 
-    def setDirty(self, dirty: bool):
-        self.dirty = dirty
-        if dirty:
-            self.parent.dirty = True
-            for connection in self.connections:
-                connection.setDirty(True)
+    def AddConnection(self, connections: Union[List[Node], Node]) -> None:
+        if isinstance(connections, list):
+            for connection in connections:
+                if self.debug:
+                    logger.info(
+                        f"[P:{self.parent.name}] [N:{self.name}] adding connection [C:{connection.name}]"
+                    )
+                self.connections.append(connection)
+        elif isinstance(connections, Node):
+            if self.debug:
+                logger.info(
+                    f"[P:{self.parent.name}] [N:{self.name}] adding connection [C:{connections.name}]"
+                )
+            self.connections.append(connections)
         else:
-            self.parent.dirty = False
-            for connection in self.connections:
-                connection.setDirty(False)
+            if self.debug:
+                logger.warning(
+                    f"[P:{self.parent.name}] [N:{self.name}] failed adding uknown connection type"
+                )
 
-    def Set(self, *args, **kwargs) -> bool:
+    def RemoveConnection(self, connectionname: str) -> bool:
+        flag = False
+        for connection in self.connections:
+            if connection.name == connectionname:
+                self.connections.remove(connection)
+                if not flag:
+                    flag = True
+
+        if flag:
+            if self.debug:
+                logger.info(
+                    f"[P:{self.parent.name}] [N:{self.name}] remove connection [C:{connectionname}]"
+                )
+            return flag
+        else:
+            if self.debug:
+                logger.info(
+                    f"[P:{self.parent.name}] [N:{self.name}] no connection [C:{connectionname}] in list"
+                )
+            return flag
+
+    def ClearConnect(self) -> None:
+        if self.debug:
+            logger.info(
+                f"[P:{self.parent.name}] [N:{self.name}] connections cleared"
+            )
+        self.connections.clear()
+
+    def SetDirty(self, flag: bool):
+        if self.debug:
+            logger.info(
+                f"[P:{self.parent.name}] [N:{self.name}] dirty {flag}"
+            )
+        self.dirty = flag
+        for connection in self.connections:
+            if self.debug:
+                logger.info(
+                    f"[P:{self.parent.name}] [N:{self.name}] setting N:[{connection.name}] dirty {flag}"
+                )
+            connection.SetDirty(flag)
+
+    def SetEnable(self, flag=bool):
+        if self.debug:
+            logger.info(
+                f"[P:{self.parent.name}] [N:{self.name}] enable {flag}"
+            )
+        self.enable = flag
+
+    def GetValue(self, *args, **kwargs):
         raise NotImplementedError(
-            f"{self.name} node must implement a set method"
+            f"{self.name} node must implement a get value method"
+        )
+
+    def SetValue(self, *args, **kwargs) -> bool:
+        raise NotImplementedError(
+            f"{self.name} node must implement a set value method"
+        )
+
+    def Evaluate(self, *args, **kwargs):
+        raise NotImplementedError(
+            f"{self.name} node must implement a evaluate method"
         )
