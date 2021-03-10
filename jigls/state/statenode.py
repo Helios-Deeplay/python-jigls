@@ -3,11 +3,11 @@ from __future__ import annotations
 import logging
 from typing import List, Optional, Union
 
-from jils.concrete.base import Base
-from jils.concrete.edge import Edge
-from jils.concrete.node import Node
+from jigls.concrete.base import Base
+from jigls.concrete.edge import Edge
+from jigls.concrete.node import Node
 
-from jils.logger import logger
+from jigls.logger import logger
 
 logger = logging.getLogger(__name__)
 

@@ -1,6 +1,6 @@
-from jils.concrete.base import Base
-from jils.logical.logicnode import LogicNode
-from jils.logical.logicoperator import Xor, And
+from jigls.concrete.base import Base
+from jigls.logical.logicnode import LogicNode
+from jigls.logical.logicoperator import Xor, And
 
 
 class HalfAdder(Base):

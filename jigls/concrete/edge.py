@@ -1,6 +1,6 @@
 from __future__ import annotations
-from jils.concrete.base import Base
-from jils.concrete.node import Node
+from jigls.concrete.base import Base
+from jigls.concrete.node import Node
 
 
 class Edge(Base):

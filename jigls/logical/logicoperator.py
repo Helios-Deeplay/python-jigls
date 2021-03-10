@@ -1,5 +1,5 @@
-from jils.concrete.edge import Edge
-from jils.logical.logicnode import LogicNode
+from jigls.concrete.edge import Edge
+from jigls.logical.logicnode import LogicNode
 
 
 class Not(Edge):

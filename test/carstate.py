@@ -1,4 +1,4 @@
-# from jils.circuit import Base, StateNode, SetIF
+# from jigls.circuit import Base, StateNode, SetIF
 
 
 # class SimpleCar(Base):
