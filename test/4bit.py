@@ -1,4 +1,4 @@
-from jils.logical.logicoperator import Bit
+from jigls.logical.logicoperator import Bit
 from test.fulladder import FullAdder
 
 

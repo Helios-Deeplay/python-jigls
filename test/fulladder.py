@@ -1,8 +1,8 @@
 # from jals.circuit import Base, LNode, Xor, And, Or
 from test.halfadder import HalfAdder
-from jils.concrete.base import Base
-from jils.logical.logicnode import LogicNode
-from jils.logical.logicoperator import Or
+from jigls.concrete.base import Base
+from jigls.logical.logicnode import LogicNode
+from jigls.logical.logicoperator import Or
 
 
 class FullAdder(Base):  # One bit adder, A,B,Cin in. Sum and Cout out

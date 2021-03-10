@@ -3,8 +3,8 @@ from __future__ import annotations
 import logging
 from typing import Any, List, Optional, Union
 
-from jils.concrete.base import Base
-from jils.logger import logger
+from jigls.concrete.base import Base
+from jigls.logger import logger
 
 logger = logging.getLogger(__name__)
 

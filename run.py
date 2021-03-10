@@ -2,15 +2,15 @@
 
 import logging
 
-from jils.facade.compare import Compare
-from jils.facade.stats import TCStat
+from jigls.facade.compare import Compare
+from jigls.facade.stats import TCStat
 
-# from jils.facade.tceuler import TCEuler
-from jils.facade.tcbfs import TCBFS
-from jils.facade.tcbruteforce import TCBruteForce
-from jils.facade.tcdfs import TCDFS
-from jils.facade.updatedb import UpdateDB
-from jils.logger import logger
+# from jigls.facade.tceuler import TCEuler
+from jigls.facade.tcbfs import TCBFS
+from jigls.facade.tcbruteforce import TCBruteForce
+from jigls.facade.tcdfs import TCDFS
+from jigls.facade.updatedb import UpdateDB
+from jigls.logger import logger
 
 logger = logging.getLogger(__name__)
 
