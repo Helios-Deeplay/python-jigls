@@ -112,6 +112,11 @@ class Node(Base):
             f"{self.name} node must implement a set value method"
         )
 
+    def Run(self, *args, **kwargs) -> bool:
+        raise NotImplementedError(
+            f"{self.name} node must implement a set value method"
+        )
+
     def Evaluate(self, *args, **kwargs):
         raise NotImplementedError(
             f"{self.name} node must implement a evaluate method"

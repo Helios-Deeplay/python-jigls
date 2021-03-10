@@ -15,7 +15,22 @@ class Edge(Base):
     ):
         super().__init__(name=name, dirty=dirty, enable=enable)
 
-    def Evaluate(self):
+    def SetEnable(self):
         raise NotImplementedError(
-            f"{self.name} edge should implement evaluate function"
+            f"{self.name} edge should implement SetEnable function"
+        )
+
+    def SetValue(self, *args, **kwargs):
+        raise NotImplementedError(
+            f"{self.name} edge should implement SetValue function"
+        )
+
+    def Run(self):
+        raise NotImplementedError(
+            f"{self.name} edge should implement Run function"
+        )
+
+    def Evaluate(self, *args, **kwargs):
+        raise NotImplementedError(
+            f"{self.name} edge should implement Evaluate function"
         )

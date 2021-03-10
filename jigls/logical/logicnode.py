@@ -35,7 +35,6 @@ class LogicNode(Node):
         return self.value
 
     def SetValue(self, value: Optional[bool]) -> bool:
-
         if self.value == value:
             return False
         else:
@@ -46,23 +45,34 @@ class LogicNode(Node):
             self.value = value
             return True
 
-    def Evaluate(self, value: Optional[bool]):
+    def Run(self):
+        if isinstance(self.parent, Edge):
+            if self.debug:
+                logger.debug(
+                    f"[N:{self.name}] triggered [P:{self.parent.name}]"
+                )
+            self.parent.Evaluate()
 
+        for connection in self.connections:
+
+            if self.debug:
+                logger.debug(
+                    f"[P:{self.parent.name}] [N:{self.name}] connection to N:{connection.name} value set {self.value}"
+                )
+            connection.Evaluate(self.value)
+
+    def Evaluate(self, value: Optional[bool]):
         if not self.SetValue(value):
+            if self.debug:
+                logger.debug(
+                    f"[P:{self.parent.name}] [N:{self.name}] no change in value, skipping evaluation"
+                )
             return
 
         if self.IsEnabled():
-            if isinstance(self.parent, Edge):
-                if self.debug:
-                    logger.debug(
-                        f"[N:{self.name}] triggered [P:{self.parent.name}]"
-                    )
-                self.parent.Evaluate()
-
-            for connection in self.connections:
-
-                if self.debug:
-                    logger.debug(
-                        f"[P:{self.parent.name}] [N:{self.name}] connection to N:{connection.name} value set {value}"
-                    )
-                connection.Evaluate(value)
+            self.Run()
+        else:
+            if self.debug:
+                logger.debug(
+                    f"[P:{self.parent.name}] [N:{self.name}] not enabled. skipping evaluation"
+                )
