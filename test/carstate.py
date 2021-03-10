@@ -7,14 +7,11 @@ class SimpleCar(Base):
     def __init__(self, name):
         super().__init__(name)
 
-        self.gear = StateNode(parent=self, name="in_gear")
-        self.camera = StateNode(self, "out_camera")
+        self.gear = StateNode(parent=self, name="in_gear", debug=True)
+        self.camera = StateNode(self, "out_camera", debug=True)
 
         self.checkGear = EvaluateIF(
-            "Rule001",
-            Check="R",
-            IfValue="ON",
-            ElseValue="OFF",
+            "Rule001", Check="R", IfValue="ON", ElseValue="OFF", debug=True
         )
 
         self.gear.AddConnection([self.checkGear.A])

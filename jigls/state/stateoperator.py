@@ -29,6 +29,8 @@ class EvaluateIF(Edge):
 
     def Evaluate(self):
         if operator.eq(self.A.value, self.check):
-            self.Q.Evaluate(self.ifv)
+            self.Q.SetValue(self.ifv)
+            self.Q.Run()
         else:
-            self.Q.Evaluate(self.elv)
+            self.Q.SetValue(self.elv)
+            self.Q.Run()

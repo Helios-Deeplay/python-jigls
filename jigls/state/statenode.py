@@ -30,6 +30,7 @@ class StateNode(Node):
         )
 
         self.value: Optional[Union[str, int, float, bool]] = value
+        self.triggerRun = False
 
     def GetValue(self) -> Optional[Union[str, int, float, bool]]:
         return self.value
@@ -45,9 +46,16 @@ class StateNode(Node):
                     f"[P:{self.parent.name}] [N:{self.name}] value change {self.value} - {value}"
                 )
             self.value = value
+            self.triggerRun = True
             return True
 
     def Run(self):
+
+        if not self.triggerRun:
+            return
+
+        self.triggerRun = False
+
         if isinstance(self.parent, Edge):
             if self.debug:
                 logger.debug(
