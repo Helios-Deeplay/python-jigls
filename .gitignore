@@ -83,7 +83,4 @@ result/*
 !result/.gitkeep
 logs/*
 !logs/.gitkeep
-*.jpeg
-*.png
-*.jpg
 data/json/*.json
