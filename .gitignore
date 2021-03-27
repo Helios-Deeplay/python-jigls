@@ -84,3 +84,4 @@ result/*
 logs/*
 !logs/.gitkeep
 data/json/*.json
+test
