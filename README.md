@@ -6,4 +6,4 @@
 
 (*pronounced jiggles*) **JIGLS** **I**s a **G**raph based **L**ogic **S**imulator.
 
-## [Changelog](CHANGELOG) 
+## [Changelog](CHANGELOG.md) 

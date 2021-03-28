@@ -24,6 +24,7 @@ class FunctionalOperation(AbstractOperation):
         kwargs = {
             k: v for d in (self.params, optionals) for k, v in d.items()
         }
+
         result = self.fn(*inputs, **kwargs)
 
         if len(self.provides) == 1:
@@ -38,9 +39,6 @@ class FunctionalOperation(AbstractOperation):
         return dict(result)
 
     def __call__(self, *args, **kwargs):
-
-        print("calling FunctionalOperation")
-
         return self.fn(*args, **kwargs)
 
     def __getstate__(self):
@@ -51,11 +49,14 @@ class FunctionalOperation(AbstractOperation):
 
 class JiglsOperation(AbstractOperation):
     def __init__(self, fn=None, **kwargs):
+
         self.fn = fn
         super().__init__(**kwargs)
 
-    def _normalize_kwargs(self, kwargs):
-        # Allow single value for needs parameter
+    def _CheckKwargs(self, kwargs):
+
+        assert kwargs["name"], "operation needs a name"
+
         if "needs" in kwargs and type(kwargs["needs"]) == str:
             assert kwargs[
                 "needs"
@@ -70,8 +71,6 @@ class JiglsOperation(AbstractOperation):
             ], "empty string provided for `needs` parameters"
 
             kwargs["provides"] = [kwargs["provides"]]
-
-        assert kwargs["name"], "operation needs a name"
 
         assert (
             type(kwargs["needs"]) == list
@@ -92,17 +91,15 @@ class JiglsOperation(AbstractOperation):
 
     def __call__(self, fn=None, **kwargs):
 
-        print("calling JiglsOperation")
-
         if fn is not None:
             self.fn = fn
 
-        total_kwargs = {}
-        total_kwargs.update(vars(self))
-        total_kwargs.update(kwargs)
-        total_kwargs = self._normalize_kwargs(total_kwargs)
+        _kwargs = {}
+        _kwargs.update(vars(self))
+        _kwargs.update(kwargs)
+        _kwargs = self._CheckKwargs(_kwargs)
 
-        return FunctionalOperation(**total_kwargs)
+        return FunctionalOperation(**_kwargs)
 
     def __repr__(self):
         return u"%s(name='%s', needs=%s, provides=%s)" % (

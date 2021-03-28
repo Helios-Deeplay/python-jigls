@@ -84,4 +84,7 @@ result/*
 logs/*
 !logs/.gitkeep
 data/json/*.json
-test
+test/*.**
+!test/testcore.py
+results/*.**
+!*/.gitkeep

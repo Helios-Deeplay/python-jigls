@@ -4,7 +4,12 @@ from typing import Dict
 
 import networkx as nx
 
-from jigls.data import Data, DataPlaceholderNode, DeleteInstruction
+from jigls.data import (
+    Data,
+    DataPlaceholderNode,
+    DeleteInstruction,
+    ParamArgs,
+)
 
 from .base import AbstractOperation, NetworkOperation
 
@@ -41,6 +46,9 @@ class JiglsNetwork(object):
         for p in operation.provides:
             self.graph.add_edge(operation, DataPlaceholderNode(p))
 
+        for k, v in operation.params.items():
+            self.graph.add_edge(ParamArgs("{%s=%s}" % (k, v)), operation)
+
         self.steps = []
 
     def AddFlow(self, source, destination):
@@ -75,6 +83,9 @@ class JiglsNetwork(object):
             # print(node)
 
             if isinstance(node, DataPlaceholderNode):
+                continue
+
+            if isinstance(node, ParamArgs):
                 continue
 
             elif isinstance(node, AbstractOperation):
@@ -183,62 +194,67 @@ class JiglsNetwork(object):
         data_node = GetDataNode(name, graph)
         return set(graph.successors(data_node)).issubset(has_executed)
 
+    # ! need to be worked on
+    # ? currently only support single threaded execution
     def _ThreadPool(self, named_inputs, outputs, thread_pool_size=10):
         """
         This method runs the graph using a parallel pool of thread executors.
         """
-        from multiprocessing.dummy import Pool
-
-        if not hasattr(self, "_thread_pool"):
-            self._thread_pool = Pool(thread_pool_size)
-
-        pool = self._thread_pool
-
-        cache = {}
-        cache.update(named_inputs)
-        necessary_nodes = self._EvaluateNecessarySteps(
-            outputs, named_inputs
+        raise NotImplementedError(
+            "need to be implemented. revert to single threaded execution"
         )
+        # from multiprocessing.dummy import Pool
 
-        has_executed = set()
+        # if not hasattr(self, "_thread_pool"):
+        #     self._thread_pool = Pool(thread_pool_size)
 
-        while True:
-            upnext = []
+        # pool = self._thread_pool
 
-            for node in necessary_nodes:
-                if isinstance(node, DeleteInstruction):
-                    if self.isReadyToDeleteDataNode(
-                        node, has_executed, self.graph
-                    ):
-                        if node in cache:
-                            cache.pop(node)
+        # cache = {}
+        # cache.update(named_inputs)
+        # necessary_nodes = self._EvaluateNecessarySteps(
+        #     outputs, named_inputs
+        # )
 
-                if not isinstance(node, AbstractOperation):
-                    continue
+        # has_executed = set()
 
-                if (
-                    self.isReadyToScheduleOperation(
-                        node, has_executed, self.graph
-                    )
-                    and node not in has_executed
-                ):
-                    upnext.append(node)
+        # while True:
+        #     upnext = []
 
-            if len(upnext) == 0:
-                break
+        #     for node in necessary_nodes:
+        #         if isinstance(node, DeleteInstruction):
+        #             if self.isReadyToDeleteDataNode(
+        #                 node, has_executed, self.graph
+        #             ):
+        #                 if node in cache:
+        #                     cache.pop(node)
 
-            done_iterator = pool.imap_unordered(
-                lambda op: (op, op._compute(cache)), upnext
-            )
+        #         if not isinstance(node, AbstractOperation):
+        #             continue
 
-            for op, result in done_iterator:
-                cache.update(result)
-                has_executed.add(op)
+        #         if (
+        #             self.isReadyToScheduleOperation(
+        #                 node, has_executed, self.graph
+        #             )
+        #             and node not in has_executed
+        #         ):
+        #             upnext.append(node)
 
-        if not outputs:
-            return cache
-        else:
-            return {k: cache[k] for k in iter(cache) if k in outputs}
+        #     if len(upnext) == 0:
+        #         break
+
+        #     done_iterator = pool.imap_unordered(
+        #         lambda op: (op, op._Compute(cache)), upnext
+        #     )
+
+        #     for op, result in done_iterator:
+        #         cache.update(result)
+        #         has_executed.add(op)
+
+        # if not outputs:
+        #     return cache
+        # else:
+        #     return {k: cache[k] for k in iter(cache) if k in outputs}
 
     def _Sequential(self, named_inputs, outputs):
         """
@@ -301,7 +317,8 @@ class JiglsNetwork(object):
 
     def Plot(
         self,
-        filename: str = None,
+        filepath: str = r"results/",
+        filename: str = "temp",
         show: bool = False,
         cleanup: bool = True,
     ):
@@ -313,6 +330,8 @@ class JiglsNetwork(object):
         def GetNodeName(a):
             if isinstance(a, DataPlaceholderNode):
                 return a
+            if isinstance(a, ParamArgs):
+                return a
             return a.name
 
         g = DiDotViz(comment="jigls network")
@@ -322,6 +341,8 @@ class JiglsNetwork(object):
         for node in self.graph.nodes:
             if isinstance(node, DataPlaceholderNode):
                 g.node(name=node, shape="rect")
+            elif isinstance(node, ParamArgs):
+                g.node(name=node, shape="hexagon")
             else:
                 g.node(name=node.name, shape="circle")
 
@@ -330,7 +351,8 @@ class JiglsNetwork(object):
             g.edge(GetNodeName(src), GetNodeName(dst))
 
         # save plot
-        path = filename if not None else "temp"
+        path = "".join((filepath, filename))
+
         if show:
             input(
                 g.render(path, view=show, format="pdf", cleanup=cleanup),
@@ -350,6 +372,7 @@ class JiglsCompose(object):
         self.merge = merge
 
     def __call__(self, *operations: AbstractOperation):
+
         assert len(operations), "no operations provided to compose"
 
         if self.merge:

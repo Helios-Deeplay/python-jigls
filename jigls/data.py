@@ -20,7 +20,10 @@ class OptionalArg(str):
     def __repr__(self):
         return 'OptionalArg("%s")' % self
 
-    pass
+
+class ParamArgs(str):
+    def __repr__(self):
+        return 'OptionalArg("%s")' % self
 
 
 class DataPlaceholderNode(str):

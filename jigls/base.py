@@ -4,15 +4,15 @@ from typing import Any, Dict, Iterable, List, Optional, Union
 class AbstractOperation(object):
     def __init__(
         self,
-        name: str,
-        needs: List[str],
-        provides: List[str],
+        name: str = str(),
+        needs: List[str] = list(),
+        provides: List[str] = list(),
         params: Dict = {},
     ):
 
         self.name = name
         self.needs = needs
-        self.provides: List = provides
+        self.provides = provides
         self.params = params
 
         self._after_init()
@@ -29,7 +29,9 @@ class AbstractOperation(object):
     def Compute(self, inputs):
         raise NotImplementedError
 
+    # * kept in place to ensure backwards compatability. Should be removed when version 1 API is released
     def _Compute(self, named_inputs, outputs=None):
+
         inputs = [named_inputs[d] for d in self.needs]
 
         results = self.Compute(inputs)
@@ -89,8 +91,8 @@ class NetworkOperation(AbstractOperation):
         assert method in options
         self._execution_method = method
 
-    def plot(self, filename=None, show=False):
-        self.net.plot(filename=filename, show=show)
+    def Plot(self, filename="temp", show=False, cleanup=True):
+        self.net.Plot(filename=filename, show=show, cleanup=cleanup)
 
     def __getstate__(self):
         state = AbstractOperation.__getstate__(self)
