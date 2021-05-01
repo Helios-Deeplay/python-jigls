@@ -1,17 +1,22 @@
+from jengine.core.data import Data
 import math
 import unittest
 from operator import add, mul, sub
-from typing import Dict, Tuple
 
-from jigls import JiglsCompose, JiglsOperation
+from jengine.core.operation import OperationCompose
+from jengine.core.network import NetworkCompose
+
+#
+def Sum(c, d, **kwargs):
+    return Data(c.GetData() + d.GetData())
 
 
 class TestCore(unittest.TestCase):
     def test_sum(self):
         """bind operation function"""
 
-        op_sum = JiglsOperation(
-            name="op_sum", needs=["a", "b"], provides="sum_ab"
+        op_sum = OperationCompose(
+            name="op_sum", needs=["a", "b"], provides=["sum_ab"]
         )(add)
 
         self.assertEqual(op_sum(1, 2), 3)
@@ -19,8 +24,10 @@ class TestCore(unittest.TestCase):
     def test_decorator(self):
         """decorator compute function"""
 
-        @JiglsOperation(
-            name="op_mul", needs=["sum_ab", "b"], provides="sum_ab_times_b"
+        @OperationCompose(
+            name="op_mul",
+            needs=["sum_ab", "b"],
+            provides=["sum_ab_times_b"],
         )
         def op_mul(a, b):
             return a * b
@@ -30,37 +37,37 @@ class TestCore(unittest.TestCase):
     def test_lateBind(self):
         """partial bind operation function"""
 
-        op_partial = JiglsOperation(
+        op_partial = OperationCompose(
             name="op_partial",
             needs=["sum_ab_p1", "sum_ab_p2"],
-            provides="p1_plus_p2",
+            provides=["p1_plus_p2"],
         )
 
         op = op_partial(add)
         self.assertEqual(op(5, 6), 11)
 
-    def test_earlyBind(self):
-        """early binding function"""
+    # def test_earlyBind(self):
+    #     """early binding function"""
 
-        op = JiglsOperation(add)
+    #     op = OperationConstructor(add)
 
-        op_sum = op(name="sum_op3", needs=["a", "b"], provides="sum_ab2")
+    #     op_sum = op(name="sum_op3", needs=["a", "b"], provides="sum_ab2")
 
-        self.assertEqual(op_sum(6, 6), 12)
+    #     self.assertEqual(op_sum(6, 6), 12)
 
     def test_param(self):
         """param test compute function"""
 
-        @JiglsOperation(
+        @OperationCompose(
             name="op_pow",
-            needs="ab",
+            needs=["ab"],
             provides=["ab_p0", "ab_p1", "ab_p2", "ab_p3"],
             params={"exponent": 3},
         )
         def op_pow(a, exponent=2):
             return [math.pow(a, y) for y in range(0, exponent + 1)]
 
-        result = op_pow._Compute({"ab": 2})
+        result = op_pow.Compute({"ab": 2})
 
         self.assertIn("ab_p0", result)
         self.assertIn("ab_p1", result)
@@ -74,40 +81,40 @@ class TestCore(unittest.TestCase):
 
     def test_compose(self):
 
-        op_sum = JiglsOperation(
-            name="op_sum", needs=["a", "b"], provides="sum_ab"
+        op_sum = OperationCompose(
+            name="op_sum", needs=["a", "b"], provides=["sum_ab"]
         )(add)
 
-        @JiglsOperation(
+        @OperationCompose(
             name="op_mul",
             needs=["sum_ab", "b"],
-            provides="sum_ab_times_b",
+            provides=["sum_ab_times_b"],
         )
         def op_mul(a, b):
             return a * b
 
-        @JiglsOperation(
+        @OperationCompose(
             name="op_pow",
-            needs="sum_ab",
+            needs=["sum_ab"],
             provides=["sum_ab_p1", "sum_ab_p2", "sum_ab_p3"],
             params={"exponent": 3},
         )
         def op_pow(a, exponent=2):
             return [math.pow(a, y) for y in range(1, exponent + 1)]
 
-        op_partial = JiglsOperation(
+        op_partial = OperationCompose(
             name="op_sum_partial",
             needs=["sum_ab_p1", "sum_ab_p2"],
-            provides="p1_plus_p2",
+            provides=["p1_plus_p2"],
         )
         op_sum_partial = op_partial(add)
 
-        op_factory = JiglsOperation(add)
+        op_factory = OperationCompose(fn=add)
         op_sum_factory = op_factory(
             name="op_sum_early", needs=["a", "b"], provides="sum_ab2"
         )
 
-        net = JiglsCompose(name="my network")(
+        net = NetworkCompose(name="my network")(
             op_sum, op_mul, op_pow, op_sum_partial, op_sum_factory
         )
 
@@ -132,14 +139,14 @@ class TestCore(unittest.TestCase):
             return abs(a) ** p
 
         # Compose the mul, sub, and abspow operations into a computation graph.
-        net = JiglsCompose(name="graph")(
-            JiglsOperation(name="mul1", needs=["a", "b"], provides=["ab"])(
-                mul
-            ),
-            JiglsOperation(
+        net = NetworkCompose(name="graph")(
+            OperationCompose(
+                name="mul1", needs=["a", "b"], provides=["ab"]
+            )(mul),
+            OperationCompose(
                 name="sub1", needs=["a", "ab"], provides=["a_minus_ab"]
             )(sub),
-            JiglsOperation(
+            OperationCompose(
                 name="abspow1",
                 needs=["a_minus_ab"],
                 provides=["abs_a_minus_ab_cubed"],
@@ -148,3 +155,37 @@ class TestCore(unittest.TestCase):
         )
 
         net.Plot()
+
+    def test_factory(self):
+        """create operation class object"""
+
+        registry = {"add": Sum}
+
+        op_sum_factory = OperationCompose(
+            name="sum1",
+            needs=["a", "b"],
+            provides=["sum_ab2"],
+            params={"exponent": 3},
+        )
+        op_factory0 = op_sum_factory(registry.get("add"))
+
+        op_sum_factory1 = OperationCompose(
+            name="sum2",
+            needs=["sum_ab2", "d"],
+            provides=["sum_ab3"],
+            params={"exponent": 4},
+        )
+        op_factory1 = op_sum_factory1(registry.get("add"))
+
+        net = NetworkCompose(name="graph")(op_factory0, op_factory1)
+        print(
+            net(
+                {
+                    "a": Data(1),
+                    "b": Data(1),
+                    "sum_ab2": Data(2),
+                    "d": Data(3),
+                }
+            )
+        )
+        # net.Plot()

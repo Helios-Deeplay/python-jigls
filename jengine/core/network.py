@@ -1,20 +1,18 @@
+import logging
 import time
 from itertools import chain
 from typing import Dict
 
 import networkx as nx
+from jengine.logger import logger
 
-from jigls.data import (
-    Data,
-    DataPlaceholderNode,
-    DeleteInstruction,
-    ParamArgs,
-)
+from .base import AbstractOperation
+from .data import Data, DataPlaceholderNode, DeleteInstruction, ParamArgs
 
-from .base import AbstractOperation, NetworkOperation
+logger = logging.getLogger(__name__)
 
 
-class JiglsNetwork(object):
+class Network(object):
     def __init__(self, **kwargs):
 
         self.graph: nx.DiGraph = nx.DiGraph()
@@ -51,15 +49,17 @@ class JiglsNetwork(object):
 
         self.steps = []
 
-    def AddFlow(self, source, destination):
+    def AddEdge(self, source, destination):
         self.graph.add_edge(
             DataPlaceholderNode(source), DataPlaceholderNode(destination)
         )
 
-    def list_layers(self):
-        assert (
-            self.steps
-        ), "network must be compiled before listing layers."
+    def ListLayers(self):
+
+        if not self.steps:
+            logger.warning(
+                "possible no operations in network / network was not compiled properly"
+            )
 
         return [
             (s.name, s)
@@ -67,8 +67,8 @@ class JiglsNetwork(object):
             if isinstance(s, AbstractOperation)
         ]
 
-    def show_layers(self):
-        for name, step in self.list_layers():
+    def ShowLayers(self):
+        for name, step in self.ListLayers():
             print("layer_name: ", name)
             print("\t", "needs: ", step.needs)
             print("\t", "provides: ", step.provides)
@@ -76,6 +76,7 @@ class JiglsNetwork(object):
 
     def Compile(self):
         self.steps.clear()
+
         executionOrder = list(nx.topological_sort(self.graph))
 
         for i, node in enumerate(executionOrder):
@@ -115,7 +116,9 @@ class JiglsNetwork(object):
                         self.steps.append(DeleteInstruction(predecessor))
 
             else:
-                raise TypeError("Unrecognized network graph node")
+                raise TypeError(
+                    "Unrecognized network graph node %s" % node
+                )
 
     def _EvaluateNecessarySteps(self, outputs, inputs):
         outputs = (
@@ -148,7 +151,7 @@ class JiglsNetwork(object):
             for output_name in outputs:
                 if not graph.has_node(output_name):
                     raise ValueError(
-                        "graphkit graph does not have an output "
+                        "network graph does not have an output "
                         "node named %s" % output_name
                     )
                 necessary_nodes |= nx.ancestors(graph, output_name)
@@ -194,14 +197,14 @@ class JiglsNetwork(object):
         data_node = GetDataNode(name, graph)
         return set(graph.successors(data_node)).issubset(has_executed)
 
-    # ! need to be worked on
+    # ! need to be worked on !!
     # ? currently only support single threaded execution
     def _ThreadPool(self, named_inputs, outputs, thread_pool_size=10):
         """
         This method runs the graph using a parallel pool of thread executors.
         """
         raise NotImplementedError(
-            "need to be implemented. revert to single threaded execution"
+            "not implemented, revert to single threaded execution"
         )
         # from multiprocessing.dummy import Pool
 
@@ -277,7 +280,7 @@ class JiglsNetwork(object):
 
                 t0 = time.time()
 
-                layer_outputs = step._Compute(cache)
+                layer_outputs = step.Compute(cache)
 
                 self._CacheUpdateOutput(cache, layer_outputs)
                 # cache.update(layer_outputs)
@@ -310,7 +313,8 @@ class JiglsNetwork(object):
     ):
         for k, v in output.items():
             if k in cache:
-                cache[k].SetData(v.GetData())
+                if v.GetData():
+                    cache[k].SetData(v.GetData())
                 cache[k].SetEnable(v.GetEnable())
             else:
                 cache[k] = v
@@ -328,21 +332,19 @@ class JiglsNetwork(object):
         assert self.graph is not None
 
         def GetNodeName(a):
-            if isinstance(a, DataPlaceholderNode):
-                return a
-            if isinstance(a, ParamArgs):
+            if isinstance(a, (DataPlaceholderNode, ParamArgs)):
                 return a
             return a.name
 
-        g = DiDotViz(comment="jigls network")
-        g.attr(splines="true")
+        g = DiDotViz(comment="network")
+        g.attr(splines="ortho")
         g.attr(overlap="false")
 
         for node in self.graph.nodes:
             if isinstance(node, DataPlaceholderNode):
                 g.node(name=node, shape="rect")
             elif isinstance(node, ParamArgs):
-                g.node(name=node, shape="hexagon")
+                g.node(name=node, shape="octagon")
             else:
                 g.node(name=node.name, shape="circle")
 
@@ -365,7 +367,35 @@ class JiglsNetwork(object):
             g.render(path, view=show, format="png", cleanup=cleanup)
 
 
-class JiglsCompose(object):
+class NetworkOperation(AbstractOperation):
+    def __init__(self, net: Network, **kwargs):
+        self.net = net
+        super().__init__(**kwargs)
+        self._executionMethod = "sequential"
+
+    def _Compute(self, named_inputs, outputs=None):
+        return self.net.Compute(
+            outputs, named_inputs, method=self._executionMethod
+        )
+
+    def __call__(self, *args, **kwargs):
+        return self._Compute(*args, **kwargs)
+
+    def SetExecutionMethod(self, method):
+        options = ["parallel", "sequential"]
+        assert method in options
+        self._executionMethod = method
+
+    def Plot(self, filename="temp", show=False, cleanup=True):
+        self.net.Plot(filename=filename, show=show, cleanup=cleanup)
+
+    def __getstate__(self):
+        state = AbstractOperation.__getstate__(self)
+        state["net"] = self.__dict__["net"]
+        return state
+
+
+class NetworkCompose(object):
     def __init__(self, name=None, merge=False):
         assert name, "compose needs a name"
         self.name = name
@@ -388,30 +418,30 @@ class JiglsCompose(object):
                     merge_set.add(op)
             operations = tuple(merge_set)
 
-        def order_preserving_uniquifier(seq, seen=None):
+        def OrderPreservingUniquifier(seq, seen=None):
             seen = seen if seen else set()
             seen_add = seen.add
             return [x for x in seq if not (x in seen or seen_add(x))]
 
-        provides = order_preserving_uniquifier(
+        provides = OrderPreservingUniquifier(
             chain(*[op.provides for op in operations])
         )
-        needs = order_preserving_uniquifier(
+        needs = OrderPreservingUniquifier(
             chain(*[op.needs for op in operations]), set(provides)
         )
 
         # compile network
-        net = JiglsNetwork()
+        net = Network()
         for op in operations:
             net.AddOperation(op)
         net.Compile()
 
         return NetworkOperation(
+            net=net,
             name=self.name,
             needs=needs,
             provides=provides,
             params={},
-            net=net,
         )
 
 

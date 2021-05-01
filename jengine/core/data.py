@@ -1,5 +1,8 @@
+from typing import Dict
+
+
 class Data(object):
-    def __init__(self, value, flag=True):
+    def __init__(self, value=None, flag=True):
         self.value = value
         self.enable = flag
 
@@ -15,6 +18,14 @@ class Data(object):
     def SetEnable(self, flag):
         self.enable = flag
 
+    def __repr__(self):
+        output = "None" if not self.enable else self.value
+        return u"%s(value='%s', enable=%s)" % (
+            self.__class__.__name__,
+            output,
+            self.enable,
+        )
+
 
 class OptionalArg(str):
     def __repr__(self):
@@ -23,7 +34,7 @@ class OptionalArg(str):
 
 class ParamArgs(str):
     def __repr__(self):
-        return 'OptionalArg("%s")' % self
+        return 'ParamArgs("%s")' % self
 
 
 class DataPlaceholderNode(str):

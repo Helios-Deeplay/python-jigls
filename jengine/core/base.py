@@ -29,21 +29,6 @@ class AbstractOperation(object):
     def Compute(self, inputs):
         raise NotImplementedError
 
-    # * kept in place to ensure backwards compatability. Should be removed when version 1 API is released
-    def _Compute(self, named_inputs, outputs=None):
-
-        inputs = [named_inputs[d] for d in self.needs]
-
-        results = self.Compute(inputs)
-
-        results = zip(self.provides, results)
-
-        if outputs:
-            outputs = set(outputs)
-            results = filter(lambda x: x[0] in outputs, results)
-
-        return dict(results)
-
     def _after_init(self):
         pass
 
@@ -69,32 +54,3 @@ class AbstractOperation(object):
             self.needs,
             self.provides,
         )
-
-
-class NetworkOperation(AbstractOperation):
-    def __init__(self, **kwargs):
-        self.net = kwargs.pop("net")
-        super().__init__(**kwargs)
-
-        self._execution_method = "sequential"
-
-    def _Compute(self, named_inputs, outputs=None):
-        return self.net.Compute(
-            outputs, named_inputs, method=self._execution_method
-        )
-
-    def __call__(self, *args, **kwargs):
-        return self._Compute(*args, **kwargs)
-
-    def set_execution_method(self, method):
-        options = ["parallel", "sequential"]
-        assert method in options
-        self._execution_method = method
-
-    def Plot(self, filename="temp", show=False, cleanup=True):
-        self.net.Plot(filename=filename, show=show, cleanup=cleanup)
-
-    def __getstate__(self):
-        state = AbstractOperation.__getstate__(self)
-        state["net"] = self.__dict__["net"]
-        return state

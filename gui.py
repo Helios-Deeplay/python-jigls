@@ -2,13 +2,13 @@ import sys
 
 from PyQt5.QtWidgets import QApplication
 
-from jiglsgui.editorwindow import NodeEditorWindow
+from jeditor.core.editorwindow import JEditorWindow
 
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
 
-    wnd = NodeEditorWindow()
+    wnd = JEditorWindow()
     wnd.show()
 
     try:

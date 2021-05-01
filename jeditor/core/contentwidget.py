@@ -13,7 +13,7 @@ from PyQt5.QtWidgets import (
 )
 
 
-class JigleWebElementContent(QWidget):
+class JNodeContent(QWidget):
     def __init__(self, parent=None) -> None:
         super().__init__(parent=parent)
 
@@ -26,7 +26,7 @@ class JigleWebElementContent(QWidget):
 
         wdg_label = QLabel("Some Title")
         wdg_label.setObjectName("1")
-        wdg_label.setHidden(True)
+        wdg_label.setHidden(False)
         self.layout.addWidget(wdg_label)
 
         textEdit = QTextEdit("foo")

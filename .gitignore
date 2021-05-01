@@ -88,3 +88,4 @@ test/*.**
 !test/testcore.py
 results/*.**
 !*/.gitkeep
+setup.py

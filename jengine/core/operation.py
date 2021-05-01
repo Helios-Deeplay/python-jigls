@@ -1,13 +1,22 @@
+import operator
+from typing import Callable, Dict, List
 from .base import AbstractOperation
 from .data import OptionalArg
 
 
-class FunctionalOperation(AbstractOperation):
-    def __init__(self, **kwargs):
-        self.fn = kwargs.pop("fn")
-        super().__init__(**kwargs)
+class Operation(AbstractOperation):
+    def __init__(
+        self,
+        name: str,
+        needs: List[str],
+        provides: List[str],
+        params: Dict = {},
+        fn: Callable = None,
+    ):
+        self.fn = fn
+        super().__init__(name, needs, provides, params)
 
-    def _Compute(self, named_inputs, outputs=None):
+    def Compute(self, named_inputs, outputs=None):
 
         inputs = [
             named_inputs[d]
@@ -25,7 +34,7 @@ class FunctionalOperation(AbstractOperation):
             k: v for d in (self.params, optionals) for k, v in d.items()
         }
 
-        result = self.fn(*inputs, **kwargs)
+        result = self.fn(*inputs, **kwargs)  # type:ignore
 
         if len(self.provides) == 1:
             result = [result]
@@ -46,14 +55,33 @@ class FunctionalOperation(AbstractOperation):
         state["fn"] = self.__dict__["fn"]
         return state
 
+    def __repr__(self):
+        func_name = getattr(self, "fn")
+        func_name = func_name and getattr(func_name, "__name__", None)
+        return u"%s(name='%s', needs=%s, provides=%s, fn=%s)" % (
+            self.__class__.__name__,
+            self.name,
+            self.needs,
+            self.provides,
+            func_name,
+        )
 
-class JiglsOperation(AbstractOperation):
-    def __init__(self, fn=None, **kwargs):
+
+class OperationCompose(AbstractOperation):
+    def __init__(
+        self,
+        name: str = str(),
+        needs: List[str] = list(),
+        provides: List[str] = list(),
+        params: Dict = {},
+        fn: Callable = None,
+    ):
 
         self.fn = fn
-        super().__init__(**kwargs)
+        super().__init__(name, needs, provides, params)
 
-    def _CheckKwargs(self, kwargs):
+    @staticmethod
+    def CheckKwargs(kwargs):
 
         assert kwargs["name"], "operation needs a name"
 
@@ -89,7 +117,7 @@ class JiglsOperation(AbstractOperation):
 
         return kwargs
 
-    def __call__(self, fn=None, **kwargs):
+    def __call__(self, fn: Callable = None, **kwargs):
 
         if fn is not None:
             self.fn = fn
@@ -97,14 +125,18 @@ class JiglsOperation(AbstractOperation):
         _kwargs = {}
         _kwargs.update(vars(self))
         _kwargs.update(kwargs)
-        _kwargs = self._CheckKwargs(_kwargs)
+        _kwargs = OperationCompose.CheckKwargs(_kwargs)
 
-        return FunctionalOperation(**_kwargs)
+        return Operation(**_kwargs)
 
     def __repr__(self):
-        return u"%s(name='%s', needs=%s, provides=%s)" % (
+        func_name = getattr(self, "fn") and getattr(
+            getattr(self, "fn"), "__name__", None
+        )
+        return u"%s(name='%s', needs=%s, provides=%s, fn=%s)" % (
             self.__class__.__name__,
             self.name,
             self.needs,
             self.provides,
+            func_name,
         )
