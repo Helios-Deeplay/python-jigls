@@ -36,31 +36,8 @@ class JEditorWindow(QtWidgets.QWidget):
 
     @property
     def graphicsScene(self) -> QtWidgets.QGraphicsScene:
-        return self._sceneManager._grScene
+        return self._sceneManager._graphicScene
 
     @property
     def graphicView(self) -> QtWidgets.QGraphicsView:
         return self._graphicsView
-
-
-def AddDebugContent(self):
-
-    qBrush = QBrush(QtCore.Qt.green)
-    qPen = QPen(QtCore.Qt.black)
-    qPen.setWidth(2)
-
-    rect = self.graphicsScene.addRect(
-        -100,
-        -100,
-        80,
-        100,
-        qPen,
-        qBrush,
-    )
-    rect.setFlags(QtWidgets.QGraphicsItem.ItemIsMovable)
-
-    text = self.graphicsScene.addText(
-        "this is my awesom text", QFont("Ubuntu")
-    )
-    text.setFlag(QtWidgets.QGraphicsItem.ItemIsMovable)
-    text.setFlag(QtWidgets.QGraphicsItem.ItemIsSelectable)

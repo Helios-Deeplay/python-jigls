@@ -1,6 +1,10 @@
-from jeditor.core.graphicsocket import JGraphicSocket
+from .socketmanager import JSocketManager
 from .contentwidget import JNodeContent
 from .constants import (
+    GRNODE_COLOR_BACKGROUND,
+    GRNODE_COLOR_DEFAULT,
+    GRNODE_COLOR_SELECTED,
+    GRNODE_COLOR_TITLE,
     GRNODE_EDGE_SIZE,
     GRNODE_NODE_HEIGHT,
     GRNODE_NODE_WIDHT,
@@ -11,7 +15,7 @@ from .constants import (
     GRNODE_TITLE_PADDING,
 )
 from .graphicscene import JiglsGraphicScene
-from typing import Optional
+from typing import List, Optional, Tuple
 from PyQt5 import QtGui, QtCore
 from PyQt5.QtWidgets import (
     QGraphicsItem,
@@ -29,15 +33,18 @@ class JGraphicNode(QGraphicsItem):
         parent: Optional[QGraphicsItem] = None,
         nodeContent: Optional[JNodeContent] = None,
         title: str = "Base Node",
+        inSockets=1,
+        outSockets=1,
     ) -> None:
         super().__init__(parent=parent)
 
-        self.initUI()
         self._InitVariables()
-        self.InitTitle()
+        self.initUI()
+
+        self.InitTitle(title)
         self._InitContent(nodeContent)
-        self.InitSocket()
-        self.title = title
+
+        self.socketManager = JSocketManager(self, inSockets, outSockets)
 
     def initUI(self):
         self.setZValue(1)
@@ -47,38 +54,30 @@ class JGraphicNode(QGraphicsItem):
 
     def _InitVariables(self):
         self._titleColor = QtCore.Qt.white
-        self._titleFont = QtGui.QFont(
+        self._titleFont: QtGui.QFont = QtGui.QFont(
             GRNODE_TITLE_FONT, GRNODE_TITLE_FONT_SIZE
         )
         self._nodeWidth: int = GRNODE_NODE_WIDHT
         self._nodeHeight: int = GRNODE_NODE_HEIGHT
         self._titleHeight: float = GRNODE_TITLE_HEIGHT
-        self._titleBrush: QtGui.QBrush = QtGui.QBrush(
-            QtGui.QColor("#FF313131")
-        )
+        self._titleBrush: QtGui.QBrush = QtGui.QBrush(QtGui.QColor(GRNODE_COLOR_TITLE))
         self._titlePadding: int = GRNODE_TITLE_PADDING
         self._edgeSize: float = GRNODE_EDGE_SIZE
-        self._penDefault: QtGui.QPen = QtGui.QPen(
-            QtGui.QColor(QtCore.Qt.black)
-        )
-        self._penSelected: QtGui.QPen = QtGui.QPen(
-            QtGui.QColor(QtCore.Qt.green)
-        )
+        self._penDefault: QtGui.QPen = QtGui.QPen(QtGui.QColor(GRNODE_COLOR_DEFAULT))
+        self._penSelected: QtGui.QPen = QtGui.QPen(QtGui.QColor(GRNODE_COLOR_SELECTED))
         self._brushBackground: QtGui.QBrush = QtGui.QBrush(
-            QtGui.QColor("#E3232323")
+            QtGui.QColor(GRNODE_COLOR_BACKGROUND)
         )
-        self._graphicsContent: QGraphicsProxyWidget = QGraphicsProxyWidget(
-            self
-        )
+        self._graphicsContent: QGraphicsProxyWidget = QGraphicsProxyWidget(self)
 
-    def InitTitle(self):
-        self.titleItem: QGraphicsTextItem = QGraphicsTextItem(self)
-        self.titleItem.setDefaultTextColor(self._titleColor)
-        self.titleItem.setFont(self._titleFont)
-        self.titleItem.setPos(self._titlePadding, 0)
-        self.titleItem.setTextWidth(
-            self._nodeWidth - 2 * self._titlePadding
-        )
+        self._titleItem: QGraphicsTextItem = QGraphicsTextItem(self)
+
+    def InitTitle(self, title: str):
+        self._titleItem.setDefaultTextColor(self._titleColor)
+        self._titleItem.setFont(self._titleFont)
+        self._titleItem.setPos(self._titlePadding, 0)
+        self._titleItem.setTextWidth(self._nodeWidth - 2 * self._titlePadding)
+        self._titleItem.setPlainText(title)
 
     @property
     def title(self):
@@ -87,14 +86,22 @@ class JGraphicNode(QGraphicsItem):
     @title.setter
     def title(self, value: str) -> None:
         self._title = value
-        self.titleItem.setPlainText(value)
+        self._titleItem.setPlainText(value)
+
+    @property
+    def nodeWidth(self):
+        return self._nodeWidth
+
+    @property
+    def nodeHeight(self):
+        return self._nodeHeight
 
     def boundingRect(self) -> QtCore.QRectF:
         return QtCore.QRectF(
-            0 + 0.5,
-            0 + 0.5,
-            self._nodeWidth - 0.5,
-            self._nodeHeight - 0.5,
+            0,
+            0,
+            self._nodeWidth,
+            self._nodeHeight,
         )
 
     def paint(
@@ -146,9 +153,7 @@ class JGraphicNode(QGraphicsItem):
             self._edgeSize,
             self._edgeSize,
         )
-        ContentPath.addRect(
-            0, self._titleHeight, self._edgeSize, self._edgeSize
-        )
+        ContentPath.addRect(0, self._titleHeight, self._edgeSize, self._edgeSize)
         ContentPath.addRect(
             self._nodeWidth - self._edgeSize,
             self._titleHeight,
@@ -170,11 +175,7 @@ class JGraphicNode(QGraphicsItem):
             self._edgeSize,
         )
 
-        painter.setPen(
-            self._penDefault
-            if not self.isSelected()
-            else self._penSelected
-        )
+        painter.setPen(self._penDefault if not self.isSelected() else self._penSelected)
         painter.setBrush(QtCore.Qt.NoBrush)
         painter.drawPath(outline.simplified())
 
@@ -186,26 +187,6 @@ class JGraphicNode(QGraphicsItem):
                 int(self._edgeSize),
                 int(self._titleHeight + self._edgeSize),
                 int(self._nodeWidth - 2 * self._edgeSize),
-                int(
-                    self._nodeHeight
-                    - 2 * self._edgeSize
-                    - self._titleHeight
-                ),
+                int(self._nodeHeight - 2 * self._edgeSize - self._titleHeight),
             )
             self._graphicsContent.setWidget(self.nodeContent)
-
-    def InitSocket(self):
-        self._inputSocket = JGraphicSocket(self, 1)
-        # self.OutputSocket = JGraphicSocket(self, self._OutputSocket_)
-
-        # self.InputSocket.setPos(
-        #     *self.GraphicNodeSocketPosition(self._InputSocket_)
-        # )
-        # self.OutputSocket.setPos(
-        #     *self.GraphicNodeSocketPosition(self._OutputSocket_)
-        # )
-
-    # def GraphicNodeSocketPosition(self, type):
-    #     x = 0 if type == self._InputSocket_ else self._nodeWidth
-    #     y = self._nodeHeight / 2
-    #     return float(x), float(y)

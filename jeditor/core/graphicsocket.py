@@ -16,13 +16,15 @@ from .constants import (
 
 
 class JGraphicSocket(QGraphicsItem):
-    def __init__(self, parent: QGraphicsItem, index: int) -> None:
+    def __init__(self, parent: QGraphicsItem, type: int, index: int) -> None:
         super().__init__(parent=parent)
 
         self.node = parent
         self.index = index
+        self.socketType = type
 
         self._InitVariables()
+        self.initUI()
 
     def _InitVariables(self):
         self._radius = GRSOCKET_RADIUS
@@ -31,6 +33,11 @@ class JGraphicSocket(QGraphicsItem):
         self._penSocket = QtGui.QPen(self._colorOutline)
         self._brushSocket = QtGui.QBrush(self._colorBackground)
         self._penSocket.setWidthF(GRSOCKET_WIDTH_OUTLINE)
+        self._penSelected: QtGui.QPen = QtGui.QPen(QtGui.QColor(QtCore.Qt.red))
+
+    def initUI(self):
+        self.setZValue(1)
+        self.setFlag(QGraphicsItem.ItemIsSelectable, True)
 
     def paint(
         self,
@@ -39,7 +46,7 @@ class JGraphicSocket(QGraphicsItem):
         widget: Optional[QWidget],
     ) -> None:
 
-        painter.setPen(self._penSocket)
+        painter.setPen(self._penSocket if not self.isSelected() else self._penSelected)
         painter.setBrush(self._brushSocket)
         painter.drawEllipse(
             int(-self._radius),
@@ -55,3 +62,5 @@ class JGraphicSocket(QGraphicsItem):
             int(2 * self._radius),
             int(2 * self._radius),
         )
+
+    # def SetPos()

@@ -1,65 +1,57 @@
-# from typing import Optional
+from jeditor.core.constants import (
+    GREDGE_COLOR_DEFAULT,
+    GREDGE_COLOR_SELECTED,
+    GREDGE_WIDTH,
+)
+from typing import Optional
 
-# from PyQt5 import QtCore, QtGui, QtWidgets
-# from PyQt5.QtWidgets import (
-#     QGraphicsItem,
-#     QGraphicsPathItem,
-#     QStyleOptionGraphicsItem,
-#     QWidget,
-# )
-
-# from gui.graphicsocket import JigleGraphicSocket
-# from gui.scene import JigleScene
-# from gui.webelementcontent import JigleWebElementContent
-
-
-# class JigleGraphicEdge(QGraphicsPathItem):
-
-#     _EdgeColor_ = QtGui.QColor("#001000")
-#     _EdgeColorSelected_ = QtGui.QColor("#00FF00")
-#     _EdgePen_ = QtGui.QPen(_EdgeColor_)
-#     _EdgePenSelected_ = QtGui.QPen(_EdgeColorSelected_)
-
-#     def __init__(
-#         self,
-#         edge,
-#         parent: Optional[QGraphicsPathItem] = None,
-#     ) -> None:
-#         super().__init__(parent=parent)
-
-#         self.edge = edge
-#         self.posSource = (0, 0)
-#         self.posDest = (200, 100)
-
-#         self.initUI()
-
-#     def initUI(self):
-#         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
-
-#     def paint(
-#         self,
-#         painter: QtGui.QPainter,
-#         option: QStyleOptionGraphicsItem,
-#         widget: Optional[QWidget],
-#     ) -> None:
-
-#         self.UpdatePath()
-#         painter.setPen(
-#             self._EdgePenSelected_ if self.isSelected() else self._EdgePen_
-#         )
-#         painter.setBrush(QtCore.Qt.NoBrush)
-#         painter.drawPath(self.path())
-
-#     def UpdatePath(self):
-#         raise NotImplementedError("must be overwritten")
+from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5.QtWidgets import (
+    QGraphicsItem,
+    QGraphicsPathItem,
+    QStyleOptionGraphicsItem,
+    QWidget,
+)
 
 
-# class JigleGraphicEdgeBezier(JigleGraphicEdge):
-#     def UpdatePath(self):
-#         s = self.posSource
-#         d = self.posDest
+class JGraphicEdgeBase(QGraphicsPathItem):
+    def __init__(
+        self,
+        source: QtCore.QPointF,
+        destination: QtCore.QPointF,
+        parent: Optional[QGraphicsPathItem] = None,
+    ) -> None:
+        super().__init__(parent=parent)
 
-#         dist = abs(s[0] - d[0]) // 2
-#         path = QtGui.QPainterPath(QtCore.QPointF(s[0], s[1]))
-#         path.cubicTo(s[0] + dist, s[1], d[0] - dist, d[1], d[0], d[1])
-#         self.setPath(path)
+        self.posSource = source
+        self.posDest = destination
+
+        self._InitVariables()
+        self.initUI()
+
+    def initUI(self):
+        self.setFlag(QGraphicsItem.ItemIsSelectable, True)
+        self.setZValue(-1.0)
+
+    def _InitVariables(self):
+        self._edgeColor = QtGui.QColor(GREDGE_COLOR_DEFAULT)
+        self._edgeColorSelected = QtGui.QColor(GREDGE_COLOR_SELECTED)
+        self._edgePen = QtGui.QPen(self._edgeColor)
+        self._edgePenSelected = QtGui.QPen(self._edgeColorSelected)
+        self._edgePen.setWidthF(GREDGE_WIDTH)
+        self._edgePenSelected.setWidthF(GREDGE_WIDTH)
+
+    def paint(
+        self,
+        painter: QtGui.QPainter,
+        option: QStyleOptionGraphicsItem,
+        widget: Optional[QWidget],
+    ) -> None:
+
+        self.UpdatePath()
+        painter.setPen(self._edgePenSelected if self.isSelected() else self._edgePen)
+        painter.setBrush(QtCore.Qt.NoBrush)
+        painter.drawPath(self.path())
+
+    def UpdatePath(self, *args, **kwargs):
+        raise NotImplementedError

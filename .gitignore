@@ -89,3 +89,4 @@ test/*.**
 results/*.**
 !*/.gitkeep
 setup.py
+.setup.py

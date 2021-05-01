@@ -27,29 +27,24 @@ class JiglsGraphicScene(QtWidgets.QGraphicsScene):
 
         self.setBackgroundBrush(self._colorBackground)
 
-    def SetGrSceneWH(self, width, height):
+    def SetGraphicsSceneWH(self, width, height):
         self.setSceneRect(-width // 2, -height // 2, width, height)
 
     def _InitVariables(self):
 
-        # * colors
         self._colorBackground = QtGui.QColor(GRSCENE_BACKGROUND_COLOR)
         self._colorMajorLine = QtGui.QColor(GRSCENE_MAJOR_LINE_COLOR)
         self._colorMinorLine = QtGui.QColor(GRSCENE_MINOR_LINE_COLOR)
 
-        # * pen
         self._widhtMajorLine: int = GRSCENE_MAJOR_LINE_PEN_WIDTH
         self._widhtMinorLine: int = GRSCENE_MINOR_LINE_PEN_WIDTH
         self._penMajorLine = QtGui.QPen(self._colorMajorLine)
         self._penMinorLine = QtGui.QPen(self._colorMinorLine)
 
-        # * line grid and spacing
         self._gridSize: int = GRSCENE_GRID_SIZE
         self._lineSpacing: int = GRSCENE_LINE_SPACING
 
-    def drawBackground(
-        self, painter: QtGui.QPainter, rect: QtCore.QRectF
-    ) -> None:
+    def drawBackground(self, painter: QtGui.QPainter, rect: QtCore.QRectF) -> None:
         super().drawBackground(painter, rect)
 
         # * grid bounds
@@ -64,17 +59,14 @@ class JiglsGraphicScene(QtWidgets.QGraphicsScene):
         # * compute lines
         majorLine = [
             QtCore.QLine(x, top, x, bottom)
-            for x in range(
-                fLeft, right, self._gridSize * self._lineSpacing
-            )
+            for x in range(fLeft, right, self._gridSize * self._lineSpacing)
         ]
 
         for y in range(fTop, bottom, self._gridSize * self._lineSpacing):
             majorLine.append(QtCore.QLine(left, y, right, y))
 
         minorLines = [
-            QtCore.QLine(x, top, x, bottom)
-            for x in range(fLeft, right, self._gridSize)
+            QtCore.QLine(x, top, x, bottom) for x in range(fLeft, right, self._gridSize)
         ]
 
         for y in range(fTop, bottom, self._gridSize):

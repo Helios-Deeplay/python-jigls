@@ -59,21 +59,13 @@ class JGraphicView(QtWidgets.QGraphicsView):
             | QtGui.QPainter.SmoothPixmapTransform
         )
 
-        self.setViewportUpdateMode(
-            QtWidgets.QGraphicsView.FullViewportUpdate
-        )
+        self.setViewportUpdateMode(QtWidgets.QGraphicsView.FullViewportUpdate)
 
-        self.setHorizontalScrollBarPolicy(
-            QtCore.Qt.ScrollBarPolicy(self.scrollbarHorz)
-        )
+        self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy(self.scrollbarHorz))
 
-        self.setVerticalScrollBarPolicy(
-            QtCore.Qt.ScrollBarPolicy(self.scrollbarVert)
-        )
+        self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy(self.scrollbarVert))
 
-        self.setTransformationAnchor(
-            QtWidgets.QGraphicsView.AnchorUnderMouse
-        )
+        self.setTransformationAnchor(QtWidgets.QGraphicsView.AnchorUnderMouse)
 
     # ! nodz guide
     def mousePressEvent(self, event: QtGui.QMouseEvent):
@@ -88,9 +80,7 @@ class JGraphicView(QtWidgets.QGraphicsView):
         elif (
             event.button() == QtCore.Qt.LeftButton
             and event.modifiers() == QtCore.Qt.NoModifier
-            and self.scene().itemAt(
-                self.mapToScene(event.pos()), QtGui.QTransform()
-            )
+            and self.scene().itemAt(self.mapToScene(event.pos()), QtGui.QTransform())
             is None
         ):
             self.currentState = "SELECTION"
@@ -143,9 +133,7 @@ class JGraphicView(QtWidgets.QGraphicsView):
     def _initRubberband(self, position: QtCore.QPoint):
         self.rubberBandStart = position
         self.origin = position
-        self.rubberband.setGeometry(
-            QtCore.QRect(self.origin, QtCore.QSize())
-        )
+        self.rubberband.setGeometry(QtCore.QRect(self.origin, QtCore.QSize()))
         self.rubberband.show()
 
     def _releaseRubberband(self):
