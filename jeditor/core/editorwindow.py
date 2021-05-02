@@ -36,7 +36,7 @@ class JEditorWindow(QtWidgets.QWidget):
 
     @property
     def graphicsScene(self) -> QtWidgets.QGraphicsScene:
-        return self._sceneManager._graphicScene
+        return self._sceneManager._graphicsScene
 
     @property
     def graphicView(self) -> QtWidgets.QGraphicsView:

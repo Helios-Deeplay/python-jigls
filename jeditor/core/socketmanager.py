@@ -20,7 +20,7 @@ except:
     from PyQt5.QtWidgets import QGraphicsItem
 
 
-class JSocketManager:
+class JNodeSocketManager:
     def __init__(self, parent, inSockets: int = 1, outSockets: int = 1) -> None:
 
         assert inSockets >= 1

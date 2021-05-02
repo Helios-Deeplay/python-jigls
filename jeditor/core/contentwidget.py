@@ -26,9 +26,11 @@ class JNodeContent(QWidget):
 
         wdg_label = QLabel("Some Title")
         wdg_label.setObjectName("1")
-        wdg_label.setHidden(False)
+        wdg_label.setHidden(True)
         self.layout.addWidget(wdg_label)
 
         textEdit = QTextEdit("foo")
         textEdit.setObjectName("2")
+        textEdit.setHidden(True)
+
         self.layout.addWidget(textEdit)

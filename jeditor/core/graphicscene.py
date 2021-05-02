@@ -1,6 +1,7 @@
 from typing import List
 from .constants import (
     GRSCENE_BACKGROUND_COLOR,
+    GRSCENE_GRID_LINES,
     GRSCENE_GRID_SIZE,
     GRSCENE_LINE_SPACING,
     GRSCENE_MAJOR_LINE_COLOR,
@@ -43,10 +44,15 @@ class JiglsGraphicScene(QtWidgets.QGraphicsScene):
 
         self._gridSize: int = GRSCENE_GRID_SIZE
         self._lineSpacing: int = GRSCENE_LINE_SPACING
+        self._enableGridLines: bool = GRSCENE_GRID_LINES
 
     def drawBackground(self, painter: QtGui.QPainter, rect: QtCore.QRectF) -> None:
         super().drawBackground(painter, rect)
 
+        if self._enableGridLines:
+            self._GridLines(painter, rect)
+
+    def _GridLines(self, painter: QtGui.QPainter, rect: QtCore.QRectF):
         # * grid bounds
         left = int(math.floor(rect.left()))
         right = int(math.ceil(rect.right()))

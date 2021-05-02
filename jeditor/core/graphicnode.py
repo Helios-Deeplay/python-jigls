@@ -1,5 +1,5 @@
 import typing
-from .socketmanager import JSocketManager
+from .socketmanager import JNodeSocketManager
 from .contentwidget import JNodeContent
 from .constants import (
     GRNODE_COLOR_BACKGROUND,
@@ -45,7 +45,7 @@ class JGraphicNode(QGraphicsItem):
         self.InitTitle(title)
         self._InitContent(nodeContent)
 
-        self.socketManager = JSocketManager(self, inSockets, outSockets)
+        self.socketManager = JNodeSocketManager(self, inSockets, outSockets)
 
     def initUI(self):
         self.setZValue(1)

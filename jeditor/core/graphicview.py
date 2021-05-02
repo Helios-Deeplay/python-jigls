@@ -1,7 +1,17 @@
+from jeditor.core.graphicedge import JGraphicEdge
+from jeditor.core.graphicsocket import JGraphicSocket
 import typing
+from copy import deepcopy
 
 from .constants import (
+    GRSOCKET_MULTI_CONNECTION,
+    GRSOCKET_TYPE_INPUT,
+    GRSOCKET_TYPE_OUTPUT,
     GRVIEW_HORZ_SCROLLBAR,
+    GRVIEW_OP_MODE_DEFAULT,
+    GRVIEW_OP_MODE_EDGE_DRAG,
+    GRVIEW_OP_MODE_PAN_VIEW,
+    GRVIEW_OP_MODE_SELECTION,
     GRVIEW_VERT_SCROLLBAR,
     GRVIEW_ZOOM,
     GRVIEW_ZOOM_CLAMPED,
@@ -16,14 +26,12 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class JGraphicView(QtWidgets.QGraphicsView):
     def __init__(
         self,
-        graphicsScene: QtWidgets.QGraphicsScene,
+        scene: QtWidgets.QGraphicsScene,
         parent: typing.Optional[QtWidgets.QWidget] = None,
     ) -> None:
         super().__init__(parent)
 
-        self._graphicsScene = graphicsScene
-
-        self.setScene(self._graphicsScene)
+        self.setScene(scene)
 
         self._InitVariables()
 
@@ -41,14 +49,17 @@ class JGraphicView(QtWidgets.QGraphicsView):
         self.zoomRangeMin = GRVIEW_ZOOM_RANGE_MIN
         self.zoomRangeMax = GRVIEW_ZOOM_RANGE_MAX
 
-        # * reference from nodz
         self.rubberband: QtWidgets.QRubberBand = QtWidgets.QRubberBand(
             QtWidgets.QRubberBand.Rectangle, self
         )
-        self.currentState: str = "DEFAULT"
+        self.currentState: int = GRVIEW_OP_MODE_DEFAULT
 
         self.rubberBandStart: QtCore.QPoint = QtCore.QPoint()
         self.origin: QtCore.QPoint = QtCore.QPoint()
+
+        self.__tempSocket: typing.Optional[JGraphicSocket] = None
+        self.__tempEdgeDragMode: bool = False
+        self.__tempEdgeDragInstance: typing.Optional[JGraphicEdge] = None
 
     def initUI(self):
 
@@ -59,19 +70,18 @@ class JGraphicView(QtWidgets.QGraphicsView):
             | QtGui.QPainter.SmoothPixmapTransform
         )
 
-        self.setViewportUpdateMode(QtWidgets.QGraphicsView.FullViewportUpdate)
-
+        self.setCacheMode(QtWidgets.QGraphicsView.CacheBackground)
+        # self.setOptimizationFlag(QtWidgets.QGraphicsView.DontAdjustForAntialiasing)
+        self.setViewportUpdateMode(QtWidgets.QGraphicsView.MinimalViewportUpdate)
         self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy(self.scrollbarHorz))
-
         self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy(self.scrollbarVert))
-
         self.setTransformationAnchor(QtWidgets.QGraphicsView.AnchorUnderMouse)
 
-    # ! nodz guide
     def mousePressEvent(self, event: QtGui.QMouseEvent):
+
         # Drag view
-        if event.button() == QtCore.Qt.MiddleButton:
-            self.currentState = "DRAG_VIEW"
+        if event.button() == QtCore.Qt.RightButton:
+            self.currentState = GRVIEW_OP_MODE_PAN_VIEW
             self.prevPos = event.pos()
             self.setCursor(QtCore.Qt.ClosedHandCursor)
             self.setInteractive(False)
@@ -83,16 +93,49 @@ class JGraphicView(QtWidgets.QGraphicsView):
             and self.scene().itemAt(self.mapToScene(event.pos()), QtGui.QTransform())
             is None
         ):
-            self.currentState = "SELECTION"
-            self._initRubberband(event.pos())
+            self.currentState = GRVIEW_OP_MODE_SELECTION
+            self._InitRubberband(event.pos())
             self.setInteractive(False)
+
+        # start edge drag
+        elif (
+            event.button() == QtCore.Qt.LeftButton
+            and self.currentState == GRVIEW_OP_MODE_DEFAULT
+            and not self.__tempEdgeDragMode
+            and isinstance(
+                self.scene().itemAt(self.mapToScene(event.pos()), QtGui.QTransform()),
+                JGraphicSocket,
+            )
+        ):
+            self.currentState = GRVIEW_OP_MODE_EDGE_DRAG
+            self.prevPos = event.pos()
+            self._StartEdgeDrag(
+                self.scene().itemAt(self.mapToScene(event.pos()), QtGui.QTransform())
+            )
+
+        # * end edge drag
+        if (
+            event.button() == QtCore.Qt.LeftButton
+            and self.__tempEdgeDragMode
+            and self.currentState != GRVIEW_OP_MODE_EDGE_DRAG
+        ):
+            self._EndEdgeDrag(
+                self.scene().itemAt(self.mapToScene(event.pos()), QtGui.QTransform())
+            )
+
+        # * debug
+        if event.button() == QtCore.Qt.MidButton:
+            for item in self.scene().items():
+                if isinstance(item, JGraphicEdge):
+                    print(type(item))
+            print("-" * 10)
 
         super().mousePressEvent(event)
 
     def mouseMoveEvent(self, event: QtGui.QMouseEvent):
 
         # Drag canvas.
-        if self.currentState == "DRAG_VIEW":
+        if self.currentState == GRVIEW_OP_MODE_EDGE_DRAG:
             offset = self.prevPos - event.pos()  # type:ignore
             self.prevPos = event.pos()
             self.verticalScrollBar().setValue(
@@ -103,40 +146,51 @@ class JGraphicView(QtWidgets.QGraphicsView):
             )
 
         # RuberBand selection.
-        elif self.currentState == "SELECTION":
+        elif self.currentState == GRVIEW_OP_MODE_SELECTION:
             self.rubberband.setGeometry(
                 QtCore.QRect(self.origin, event.pos()).normalized()
             )
+
+        # Edge drag
+        elif self.__tempEdgeDragMode:
+            self.__tempEdgeDragInstance.tempDragPos = self.mapToScene(event.pos())
+            self.__tempEdgeDragInstance.update()
 
         super().mouseMoveEvent(event)
 
     def mouseReleaseEvent(self, event: QtGui.QMouseEvent):
 
         # Drag
-        if self.currentState == "DRAG_VIEW":
+        if self.currentState == GRVIEW_OP_MODE_PAN_VIEW:
             self.setCursor(QtCore.Qt.ArrowCursor)
             self.setInteractive(True)
 
         # Selection.
-        elif self.currentState == "SELECTION":
+        elif self.currentState == GRVIEW_OP_MODE_SELECTION:
             self.rubberband.setGeometry(
                 QtCore.QRect(self.origin, event.pos()).normalized()
             )
-            painterPath = self._releaseRubberband()
+            painterPath = self._ReleaseRubberband()
             self.setInteractive(True)
             self.scene().setSelectionArea(painterPath)
 
-        self.currentState = "DEFAULT"
+        self.currentState = GRVIEW_OP_MODE_DEFAULT
+
+        # # * debug
+        # if event.button() == QtCore.Qt.LeftButton:
+        #     for item in self.scene().items():
+        #         print(type(item))
+        #     print("-" * 10)
 
         super().mouseReleaseEvent(event)
 
-    def _initRubberband(self, position: QtCore.QPoint):
+    def _InitRubberband(self, position: QtCore.QPoint):
         self.rubberBandStart = position
         self.origin = position
         self.rubberband.setGeometry(QtCore.QRect(self.origin, QtCore.QSize()))
         self.rubberband.show()
 
-    def _releaseRubberband(self):
+    def _ReleaseRubberband(self):
         painterPath = QtGui.QPainterPath()
         rect = self.mapToScene(self.rubberband.geometry())
         painterPath.addPolygon(rect)
@@ -162,225 +216,58 @@ class JGraphicView(QtWidgets.QGraphicsView):
         if not clamped or self.zoomClamped is False:
             self.scale(zoomFactor, zoomFactor)
 
+    def _StartEdgeDrag(self, item: typing.Any) -> typing.Any:
 
-def NODZGUIDE():
-    """
-    # # ! nodz guide
-    # def mousePressEvent(self, event: QtGui.QMouseEvent):
-    #     # Tablet zoom
-    #     if (
-    #         event.button() == QtCore.Qt.RightButton
-    #         and event.modifiers() == QtCore.Qt.AltModifier
-    #     ):
-    #         self.currentState = "ZOOM_VIEW"
-    #         self.initMousePos = event.pos()
-    #         self.zoomInitialPos = event.pos()
-    #         self.initMouse = QtGui.QCursor.pos()
-    #         self.setInteractive(False)
+        assert isinstance(item, JGraphicSocket)
+        if item.socketType == GRSOCKET_TYPE_INPUT:
+            return
 
-    #     # Drag view
-    #     elif (
-    #         event.button() == QtCore.Qt.MiddleButton
-    #         and event.modifiers() == QtCore.Qt.AltModifier
-    #     ):
-    #         self.currentState = "DRAG_VIEW"
-    #         self.prevPos = event.pos()
-    #         self.setCursor(QtCore.Qt.ClosedHandCursor)
-    #         self.setInteractive(False)
+        if item.multiConnectionType:
+            self.__tempEdgeDragInstance = JGraphicEdge(
+                startSocket=item, destinationSocket=None, tempDragPos=item.scenePos()
+            )
+            self.scene().addItem(self.__tempEdgeDragInstance)
+            self.__tempEdgeDragMode = True
+            self.__tempSocket = item
 
-    #     # Rubber band selection
-    #     elif (
-    #         event.button() == QtCore.Qt.LeftButton
-    #         and event.modifiers() == QtCore.Qt.NoModifier
-    #         and self.scene().itemAt(
-    #             self.mapToScene(event.pos()), QtGui.QTransform()
-    #         )
-    #         is None
-    #     ):
-    #         self.currentState = "SELECTION"
-    #         self._initRubberband(event.pos())
-    #         self.setInteractive(False)
+        elif not item.multiConnectionType and len(item.edgeList) == 0:
+            self.__tempEdgeDragInstance = JGraphicEdge(
+                startSocket=item, destinationSocket=None, tempDragPos=item.scenePos()
+            )
+            self.scene().addItem(self.__tempEdgeDragInstance)
+            self.__tempEdgeDragMode = True
+            self.__tempSocket = item
 
-    #     # Drag Item
-    #     elif (
-    #         event.button() == QtCore.Qt.LeftButton
-    #         and event.modifiers() == QtCore.Qt.NoModifier
-    #         and self.scene().itemAt(
-    #             self.mapToScene(event.pos()), QtGui.QTransform()
-    #         )
-    #         is not None
-    #     ):
-    #         self.currentState = "DRAG_ITEM"
-    #         self.setInteractive(True)
+    def _EndEdgeDrag(self, item: typing.Any):
 
-    #     # Add selection
-    #     elif (
-    #         event.button() == QtCore.Qt.LeftButton
-    #         and QtCore.Qt.Key_Shift in self.pressedKeys
-    #         and QtCore.Qt.Key_Control in self.pressedKeys
-    #     ):
-    #         self.currentState = "ADD_SELECTION"
-    #         self._initRubberband(event.pos())
-    #         self.setInteractive(False)
+        assert isinstance(self.__tempEdgeDragInstance, JGraphicEdge)
+        if isinstance(item, JGraphicSocket):
 
-    #     # Subtract selection
-    #     elif (
-    #         event.button() == QtCore.Qt.LeftButton
-    #         and event.modifiers() == QtCore.Qt.ControlModifier
-    #     ):
-    #         self.currentState = "SUBTRACT_SELECTION"
-    #         self._initRubberband(event.pos())
-    #         self.setInteractive(False)
+            if self.__tempSocket == item:
+                self.__tempEdgeDragInstance.RemoveFromSockets()
+                self.scene().removeItem(self.__tempEdgeDragInstance)
+                self._ResetEdgeDrag()
 
-    #     # Toggle selection
-    #     elif (
-    #         event.button() == QtCore.Qt.LeftButton
-    #         and event.modifiers() == QtCore.Qt.ShiftModifier
-    #     ):
-    #         self.currentState = "TOGGLE_SELECTION"
-    #         self._initRubberband(event.pos())
-    #         self.setInteractive(False)
+            elif self.__tempSocket.socketType == item.socketType:
+                self.__tempEdgeDragInstance.RemoveFromSockets()
+                self.scene().removeItem(self.__tempEdgeDragInstance)
+                self._ResetEdgeDrag()
 
-    #     else:
-    #         self.currentState = "DEFAULT"
+            else:
+                assert isinstance(self.__tempEdgeDragInstance, JGraphicEdge)
+                self.__tempEdgeDragInstance.destinationSocket = item
+                self._ResetEdgeDrag()
 
-    #     super().mousePressEvent(event)
+            self.setInteractive(True)
 
-    # def mouseMoveEvent(self, event: QtGui.QMouseEvent):
-    #     # Zoom.
-    #     if self.currentState == "ZOOM_VIEW":
-    #         offset = self.zoomInitialPos.x() - event.pos().x()
+        elif not isinstance(item, JGraphicSocket):
+            self.__tempEdgeDragInstance.RemoveFromSockets()
+            self.scene().removeItem(self.__tempEdgeDragInstance)
+            self._ResetEdgeDrag()
+            self.setInteractive(True)
 
-    #         if offset > self.previousMouseOffset:
-    #             self.previousMouseOffset = offset
-    #             self.zoomDirection = -1
-    #             self.zoomIncr -= 1
-
-    #         elif offset == self.previousMouseOffset:
-    #             self.previousMouseOffset = offset
-    #             if self.zoomDirection == -1:
-    #                 self.zoomDirection = -1
-    #             else:
-    #                 self.zoomDirection = 1
-
-    #         else:
-    #             self.previousMouseOffset = offset
-    #             self.zoomDirection = 1
-    #             self.zoomIncr += 1
-
-    #         if self.zoomDirection == 1:
-    #             zoomFactor = 1.03
-    #         else:
-    #             zoomFactor = 1 / 1.03
-
-    #         # Perform zoom and re-center on initial click position.
-    #         pBefore = self.mapToScene(self.initMousePos)
-    #         self.setTransformationAnchor(
-    #             QtWidgets.QGraphicsView.AnchorViewCenter
-    #         )
-    #         self.scale(zoomFactor, zoomFactor)
-    #         pAfter = self.mapToScene(self.initMousePos)
-    #         diff = pAfter - pBefore
-
-    #         self.setTransformationAnchor(QtWidgets.QGraphicsView.NoAnchor)
-    #         self.translate(diff.x(), diff.y())
-
-    #     # Drag canvas.
-    #     elif self.currentState == "DRAG_VIEW":
-    #         offset = self.prevPos - event.pos()
-    #         self.prevPos = event.pos()
-    #         self.verticalScrollBar().setValue(
-    #             self.verticalScrollBar().value() + offset.y()
-    #         )
-    #         self.horizontalScrollBar().setValue(
-    #             self.horizontalScrollBar().value() + offset.x()
-    #         )
-
-    #     # RuberBand selection.
-    #     elif (
-    #         self.currentState == "SELECTION"
-    #         or self.currentState == "ADD_SELECTION"
-    #         or self.currentState == "SUBTRACT_SELECTION"
-    #         or self.currentState == "TOGGLE_SELECTION"
-    #     ):
-    #         self.rubberband.setGeometry(
-    #             QtCore.QRect(self.origin, event.pos()).normalized()
-    #         )
-
-    #     super().mouseMoveEvent(event)
-
-    # def mouseReleaseEvent(self, event: QtGui.QMouseEvent):
-    #     # Zoom the View.
-    #     if self.currentState == ".ZOOM_VIEW":
-    #         self.offset = 0
-    #         self.zoomDirection = 0
-    #         self.zoomIncr = 0
-    #         self.setInteractive(True)
-
-    #     # Drag View.
-    #     elif self.currentState == "DRAG_VIEW":
-    #         self.setCursor(QtCore.Qt.ArrowCursor)
-    #         self.setInteractive(True)
-
-    #     # Selection.
-    #     elif self.currentState == "SELECTION":
-    #         self.rubberband.setGeometry(
-    #             QtCore.QRect(self.origin, event.pos()).normalized()
-    #         )
-    #         painterPath = self._releaseRubberband()
-    #         self.setInteractive(True)
-    #         self.scene().setSelectionArea(painterPath)
-
-    #     # Add Selection.
-    #     elif self.currentState == "ADD_SELECTION":
-    #         self.rubberband.setGeometry(
-    #             QtCore.QRect(self.origin, event.pos()).normalized()
-    #         )
-    #         painterPath = self._releaseRubberband()
-    #         self.setInteractive(True)
-    #         for item in self.scene().items(painterPath):
-    #             item.setSelected(True)
-
-    #     # Subtract Selection.
-    #     elif self.currentState == "SUBTRACT_SELECTION":
-    #         self.rubberband.setGeometry(
-    #             QtCore.QRect(self.origin, event.pos()).normalized()
-    #         )
-    #         painterPath = self._releaseRubberband()
-    #         self.setInteractive(True)
-    #         for item in self.scene().items(painterPath):
-    #             item.setSelected(False)
-
-    #     # Toggle Selection
-    #     elif self.currentState == "TOGGLE_SELECTION":
-    #         self.rubberband.setGeometry(
-    #             QtCore.QRect(self.origin, event.pos()).normalized()
-    #         )
-    #         painterPath = self._releaseRubberband()
-    #         self.setInteractive(True)
-    #         for item in self.scene().items(painterPath):
-    #             if item.isSelected():
-    #                 item.setSelected(False)
-    #             else:
-    #                 item.setSelected(True)
-
-    #     self.currentState = "DEFAULT"
-
-    #     super().mouseReleaseEvent(event)
-
-    # def _initRubberband(self, position: QtCore.QPoint):
-    #     self.rubberBandStart = position
-    #     self.origin = position
-    #     self.rubberband.setGeometry(
-    #         QtCore.QRect(self.origin, QtCore.QSize())
-    #     )
-    #     self.rubberband.show()
-
-    # def _releaseRubberband(self):
-    #     painterPath = QtGui.QPainterPath()
-    #     rect = self.mapToScene(self.rubberband.geometry())
-    #     painterPath.addPolygon(rect)
-    #     self.rubberband.hide()
-    #     return painterPath
-    """
-    pass
+    def _ResetEdgeDrag(self):
+        assert isinstance(self.__tempEdgeDragInstance, JGraphicEdge)
+        self.__tempEdgeDragMode = False
+        self.__tempSocket = None
+        self.__tempEdgeDragInstance = None
