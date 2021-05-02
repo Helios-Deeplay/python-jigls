@@ -1,4 +1,8 @@
-from jeditor.core.graphicedgepath import JGraphicEdgeBezier, JGraphicEdgeDirect
+from .graphicedgepath import (
+    JGraphicEdgeBezier,
+    JGraphicEdgeDirect,
+    JGraphicEdgeSquare,
+)
 from typing import List
 
 from PyQt5.QtCore import QPointF
@@ -41,24 +45,30 @@ class JSceneManager:
     def _debug(self):
         node1 = JGraphicNode(inSockets=1, outSockets=1, nodeContent=JNodeContent())
         node2 = JGraphicNode(inSockets=1, outSockets=1, nodeContent=JNodeContent())
-        # node3 = JGraphicNode(inSockets=2, outSockets=2, nodeContent=JNodeContent())
 
         node1.setPos(QPointF(-350, -250))
         node2.setPos(QPointF(-75, 0))
-        # node3.setPos(QPointF(200, -150))
 
         self.graphicsScene.addItem(node1)
         self.graphicsScene.addItem(node2)
-        # self.graphicsScene.addItem(node3)
 
-        edge1 = JGraphicEdgeDirect(
-            node1.socketManager.GetOutputSocketPosByIndex(0),
-            node2.socketManager.GetInputSocketPosByIndex(0),
-        )
-        edge2 = JGraphicEdgeBezier(
-            node2.socketManager.GetOutputSocketPosByIndex(0),
-            node1.socketManager.GetInputSocketPosByIndex(0),
+        for i in range(100):
+            self.graphicsScene.addItem(
+                JGraphicNode(inSockets=1, outSockets=1, nodeContent=JNodeContent())
+            )
+
+        # edge1 = JGraphicEdgeDirect(
+        #     node1.socketManager.GetOutputSocketByIndex(0),
+        #     node2.socketManager.GetInputSocketByIndex(0),
+        # )
+        edge2 = JGraphicEdgeSquare(
+            node2.socketManager.GetOutputSocketByIndex(0),
+            node1.socketManager.GetInputSocketByIndex(0),
         )
 
-        self.graphicsScene.addItem(edge1)
+        # self.graphicsScene.addItem(edge1)
         self.graphicsScene.addItem(edge2)
+
+        # node3 = JGraphicNode(inSockets=2, outSockets=2, nodeContent=JNodeContent())
+        # node3.setPos(QPointF(200, -150))
+        # self.graphicsScene.addItem(node3)

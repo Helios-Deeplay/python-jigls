@@ -1,3 +1,4 @@
+from jeditor.core.graphicsocket import JGraphicSocket
 from jeditor.core.constants import (
     GREDGE_COLOR_DEFAULT,
     GREDGE_COLOR_SELECTED,
@@ -17,17 +18,25 @@ from PyQt5.QtWidgets import (
 class JGraphicEdgeBase(QGraphicsPathItem):
     def __init__(
         self,
-        source: QtCore.QPointF,
-        destination: QtCore.QPointF,
+        startSocket: JGraphicSocket,
+        endSocket: JGraphicSocket,
         parent: Optional[QGraphicsPathItem] = None,
     ) -> None:
         super().__init__(parent=parent)
 
-        self.posSource = source
-        self.posDest = destination
+        self._startSocket: Optional[JGraphicSocket] = startSocket
+        self._endSocket: Optional[JGraphicSocket] = endSocket
 
         self._InitVariables()
         self.initUI()
+
+    @property
+    def sourcePos(self):
+        return self._startSocket.scenePos()
+
+    @property
+    def destinationPos(self):
+        return self._endSocket.scenePos()
 
     def initUI(self):
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
@@ -40,6 +49,9 @@ class JGraphicEdgeBase(QGraphicsPathItem):
         self._edgePenSelected = QtGui.QPen(self._edgeColorSelected)
         self._edgePen.setWidthF(GREDGE_WIDTH)
         self._edgePenSelected.setWidthF(GREDGE_WIDTH)
+        self._startSocket.edge = self
+        if self._endSocket is not None:
+            self._endSocket.edge = self
 
     def paint(
         self,
@@ -52,6 +64,14 @@ class JGraphicEdgeBase(QGraphicsPathItem):
         painter.setPen(self._edgePenSelected if self.isSelected() else self._edgePen)
         painter.setBrush(QtCore.Qt.NoBrush)
         painter.drawPath(self.path())
+
+    def RemoveFromSockets(self):
+        if self._startSocket is not None:
+            self._startSocket.edge = None
+        if self._endSocket is not None:
+            self._endSocket.edge = None
+        self._startSocket = None
+        self._endSocket = None
 
     def UpdatePath(self, *args, **kwargs):
         raise NotImplementedError

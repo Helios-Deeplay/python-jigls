@@ -1,3 +1,4 @@
+import typing
 from .socketmanager import JSocketManager
 from .contentwidget import JNodeContent
 from .constants import (
@@ -51,6 +52,12 @@ class JGraphicNode(QGraphicsItem):
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
         self.setFlag(QGraphicsItem.ItemIsMovable, True)
         self.setFlag(QGraphicsItem.ItemIsFocusable, True)
+        # self.setFlag(QGraphicsItem.ItemSendsGeometryChanges, True)
+
+    def itemChange(
+        self, change: QGraphicsItem.GraphicsItemChange, value: typing.Any
+    ) -> typing.Any:
+        return super().itemChange(change, value)
 
     def _InitVariables(self):
         self._titleColor = QtCore.Qt.white

@@ -5,8 +5,8 @@ from PyQt5 import QtCore, QtGui
 
 class JGraphicEdgeDirect(JGraphicEdgeBase):
     def UpdatePath(self):
-        s = self.posSource
-        d = self.posDest
+        s = self.sourcePos
+        d = self.destinationPos
 
         path = QtGui.QPainterPath(s)
         path.lineTo(d)
@@ -15,8 +15,8 @@ class JGraphicEdgeDirect(JGraphicEdgeBase):
 
 class JGraphicEdgeSquare(JGraphicEdgeBase):
     def UpdatePath(self, *args, hndWeight=0.5, **kwargs):
-        s = self.posSource
-        d = self.posDest
+        s = self.sourcePos
+        d = self.destinationPos
 
         mid_x = s.x() + ((d.x() - s.x()) * hndWeight)
 
@@ -29,8 +29,8 @@ class JGraphicEdgeSquare(JGraphicEdgeBase):
 
 class JGraphicEdgeBezier(JGraphicEdgeBase):
     def UpdatePath(self):
-        s = self.posSource
-        d = self.posDest
+        s = self.sourcePos
+        d = self.destinationPos
 
         dist = abs(s.x() - d.x()) // 2
 

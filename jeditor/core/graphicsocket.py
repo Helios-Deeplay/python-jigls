@@ -14,14 +14,26 @@ from .constants import (
     GRSOCKET_WIDTH_OUTLINE,
 )
 
+try:
+    from .graphicedge import JGraphicEdgeBase
+except Exception as e:
+    pass
+
 
 class JGraphicSocket(QGraphicsItem):
-    def __init__(self, parent: QGraphicsItem, type: int, index: int) -> None:
+    def __init__(
+        self,
+        parent: QGraphicsItem,
+        index: int,
+        type: int,
+        edge=None,
+    ) -> None:
         super().__init__(parent=parent)
 
         self.node = parent
         self.index = index
         self.socketType = type
+        self._edge: Optional[JGraphicEdgeBase] = edge
 
         self._InitVariables()
         self.initUI()
@@ -63,4 +75,13 @@ class JGraphicSocket(QGraphicsItem):
             int(2 * self._radius),
         )
 
-    # def SetPos()
+    @property
+    def edge(self):
+        return self._edge
+
+    @edge.setter
+    def edge(self, value) -> None:
+        self._edge = value
+
+    def HasEdge(self):
+        return True if self._edge is not None else False
