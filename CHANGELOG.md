@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.4.1] - 2021-05-02
+## [0.4.2] - 2021-05-02
 
 ### Added
 
@@ -10,6 +10,9 @@
 - Movables graphicitems
 - Simple node content template
 
+### Fixed
+
+- edges added to non multiconnection socket. socket list was not being updated
 ## [0.3.0] - 2021-03-27
 
 ### Added

@@ -42,7 +42,7 @@ class JSceneManager:
         node1 = JGraphicNode(inSockets=1, outSockets=1, nodeContent=JNodeContent())
         node2 = JGraphicNode(inSockets=1, outSockets=1, nodeContent=JNodeContent())
         node3 = JGraphicNode(inSockets=1, outSockets=1, nodeContent=JNodeContent())
-        node4 = JGraphicNode(inSockets=1, outSockets=1, nodeContent=JNodeContent())
+        # node4 = JGraphicNode(inSockets=1, outSockets=1, nodeContent=JNodeContent())
 
         node1.setPos(QPointF(-350, -250))
         node2.setPos(QPointF(-75, 0))
@@ -51,7 +51,7 @@ class JSceneManager:
         self.graphicsScene.addItem(node1)
         self.graphicsScene.addItem(node2)
         self.graphicsScene.addItem(node3)
-        self.graphicsScene.addItem(node4)
+        # self.graphicsScene.addItem(node4)
 
         edge1 = JGraphicEdge(
             node2.socketManager.GetOutputSocketByIndex(0),

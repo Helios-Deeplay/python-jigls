@@ -33,7 +33,7 @@ class JGraphicSocket(QGraphicsItem):
     ) -> None:
         super().__init__(parent=parent)
 
-        self.node: QGraphicsItem = parent
+        self.parentNode: QGraphicsItem = parent
         self.index: int = index
         self.socketType: int = socketType
         self._edgeList: Set[Optional[JGraphicEdge]] = set()

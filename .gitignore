@@ -90,3 +90,4 @@ results/*.**
 !*/.gitkeep
 setup.py
 .setup.py
+.mypy_cache

@@ -49,6 +49,7 @@ class JGraphicEdge(QGraphicsPathItem):
     @destinationSocket.setter
     def destinationSocket(self, value: Optional[JGraphicSocket]) -> None:
         self._destinationSocket = value
+        self._destinationSocket.edgeList = self
 
     @property
     def tempDragPos(self) -> QtCore.QPointF:
