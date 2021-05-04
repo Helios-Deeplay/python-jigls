@@ -34,8 +34,6 @@ class JGraphicNode(QGraphicsItem):
         parent: Optional[QGraphicsItem] = None,
         nodeContent: Optional[JNodeContent] = None,
         title: str = "Base Node",
-        inSockets=1,
-        outSockets=1,
     ) -> None:
         super().__init__(parent=parent)
 
@@ -45,7 +43,7 @@ class JGraphicNode(QGraphicsItem):
         self.InitTitle(title)
         self._InitContent(nodeContent)
 
-        self.socketManager = JNodeSocketManager(self, inSockets, outSockets)
+        self.socketManager = JNodeSocketManager(self)
 
     def initUI(self):
         self.setZValue(1)
@@ -53,11 +51,6 @@ class JGraphicNode(QGraphicsItem):
         self.setFlag(QGraphicsItem.ItemIsMovable, True)
         self.setFlag(QGraphicsItem.ItemIsFocusable, True)
         # self.setFlag(QGraphicsItem.ItemSendsGeometryChanges, True)
-
-    def itemChange(
-        self, change: QGraphicsItem.GraphicsItemChange, value: typing.Any
-    ) -> typing.Any:
-        return super().itemChange(change, value)
 
     def _InitVariables(self):
         self._titleColor = QtCore.Qt.white

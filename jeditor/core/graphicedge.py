@@ -1,9 +1,6 @@
-from jeditor.core.graphicedgepath import (
-    JGraphicEdgeBezier,
-    JGraphicEdgeDirect,
-    JGraphicEdgeSquare,
-)
-from jeditor.core.graphicsocket import JGraphicSocket
+import logging
+from typing import Optional
+
 from jeditor.core.constants import (
     GREDGE_COLOR_DEFAULT,
     GREDGE_COLOR_SELECTED,
@@ -12,8 +9,18 @@ from jeditor.core.constants import (
     GREDGE_PATH_SQUARE,
     GREDGE_WIDTH,
 )
-from typing import Optional
+from jeditor.core.graphicedgepath import (
+    JGraphicEdgeBezier,
+    JGraphicEdgeDirect,
+    JGraphicEdgeSquare,
+)
 
+try:
+    # ? just using for typing. need to resolve circular imports
+    from jeditor.core.graphicsocket import JGraphicSocket
+except:
+    pass
+from jeditor.logger import logger
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import (
     QGraphicsItem,
@@ -22,60 +29,78 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
+logger = logging.getLogger(__name__)
+
 
 class JGraphicEdge(QGraphicsPathItem):
     def __init__(
         self,
-        startSocket: Optional[JGraphicSocket],
-        destinationSocket: Optional[JGraphicSocket],
+        startSocket,
+        destinationSocket,
         parent: Optional[QGraphicsPathItem] = None,
         edgePathType: int = GREDGE_PATH_DIRECT,
-        tempDragPos: QtCore.QPointF = QtCore.QPointF(),
     ) -> None:
         super().__init__(parent=parent)
 
-        self._startSocket: Optional[JGraphicSocket] = startSocket
+        self._startSocket: JGraphicSocket = startSocket
         self._destinationSocket: Optional[JGraphicSocket] = destinationSocket
         self._edgePathType: int = edgePathType
-        self._tempDragPos: QtCore.QPointF = tempDragPos
+        self._tempDragPos: QtCore.QPointF = QtCore.QPointF()
 
         self._InitVariables()
         self.initUI()
+
+    @property
+    def startSocket(self):
+        return self._startSocket
 
     @property
     def destinationSocket(self):
         return self._destinationSocket
 
     @destinationSocket.setter
-    def destinationSocket(self, value: Optional[JGraphicSocket]) -> None:
-        self._destinationSocket = value
-        self._destinationSocket.edgeList = self
+    def destinationSocket(self, socket) -> None:
+        assert not socket.AtMaxEdgeLimit(), logger.warning("max edge limit reached")
+        self._destinationSocket = socket
+        self._destinationSocket.AddEdge(self)
+        self._tempDragPos = QtCore.QPointF()
 
     @property
     def tempDragPos(self) -> QtCore.QPointF:
-        return QtCore.QPointF()
+        raise UserWarning(
+            f"fetching temp position disabled at the moment, use destination pos"
+        )
+        return self._tempDragPos
 
     @tempDragPos.setter
-    def tempDragPos(self, value: QtCore.QPointF):
-        self._tempDragPos = value
+    def tempDragPos(self, pos: QtCore.QPointF):
+        self._tempDragPos = pos
+        if self._destinationSocket is not None:
+            self._destinationSocket.RemoveEdge(self)
+            logger.info("removed edge from destination socket, edge is repositioning")
+            self._destinationSocket = None
 
     @property
     def sourcePos(self):
         return self._startSocket.scenePos()
 
     @property
-    def destinationPos(self):
+    def destinationPos(self) -> QtCore.QPointF:
         if self._destinationSocket is not None:
             return self._destinationSocket.scenePos()
         return self._tempDragPos
 
     @property
-    def edgePathType(self):
+    def endPos(self) -> QtCore.QPointF:
+        return self.destinationPos
+
+    @property
+    def edgePathType(self) -> int:
         return self._edgePathType
 
     @edgePathType.setter
-    def edgePathType(self, value: int) -> None:
-        self._edgePathType = value
+    def edgePathType(self, pathType: int) -> None:
+        self._edgePathType = pathType
 
     def initUI(self):
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
@@ -89,9 +114,9 @@ class JGraphicEdge(QGraphicsPathItem):
         self._edgePen.setWidthF(GREDGE_WIDTH)
         self._edgePenSelected.setWidthF(GREDGE_WIDTH)
 
-        self._startSocket.edgeList = self
+        self._startSocket.AddEdge(self)
         if self._destinationSocket is not None:
-            self._destinationSocket.edgeList = self
+            self._destinationSocket.AddEdge(self)
 
     def paint(
         self,
@@ -110,8 +135,6 @@ class JGraphicEdge(QGraphicsPathItem):
             self._startSocket.RemoveEdge(self)
         if self._destinationSocket is not None:
             self._destinationSocket.RemoveEdge(self)
-        self._startSocket = None
-        self._destinationSocket = None
 
     def UpdatePath(self, *args, **kwargs):
         if self.edgePathType == GREDGE_PATH_DIRECT:
@@ -122,10 +145,12 @@ class JGraphicEdge(QGraphicsPathItem):
             self.setPath(
                 JGraphicEdgeBezier.GetPath(self.sourcePos, self.destinationPos)
             )
-        else:
+        elif self.edgePathType == GREDGE_PATH_SQUARE:
             self.setPath(
                 JGraphicEdgeSquare.GetPath(self.sourcePos, self.destinationPos)
             )
-
-    def __del__(self):
-        self.RemoveFromSockets()
+        else:
+            logger.error("unknown edge path type, defaulting direct")
+            self.setPath(
+                JGraphicEdgeDirect.GetPath(self.sourcePos, self.destinationPos)
+            )

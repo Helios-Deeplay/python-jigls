@@ -1,5 +1,7 @@
+import logging
 from typing import List, Optional, Set
 
+from jeditor.logger import logger
 from PyQt5 import QtCore, QtGui
 from PyQt5.QtWidgets import (
     QGraphicsItem,
@@ -12,15 +14,12 @@ from .constants import (
     GRSOCKET_COLOR_BACKGROUND,
     GRSOCKET_COLOR_HOVER,
     GRSOCKET_COLOR_OUTLINE,
-    GRSOCKET_MULTI_CONNECTION,
     GRSOCKET_RADIUS,
     GRSOCKET_WIDTH_OUTLINE,
 )
+from .graphicedge import JGraphicEdge
 
-try:
-    from .graphicedge import JGraphicEdge
-except Exception as e:
-    pass
+logger = logging.getLogger(__name__)
 
 
 class JGraphicSocket(QGraphicsItem):
@@ -29,15 +28,14 @@ class JGraphicSocket(QGraphicsItem):
         parent: QGraphicsItem,
         index: int,
         socketType: int,
-        multiConnectionType: bool = GRSOCKET_MULTI_CONNECTION,
+        multiConnection: bool = True,
     ) -> None:
         super().__init__(parent=parent)
 
         self.parentNode: QGraphicsItem = parent
         self.index: int = index
         self.socketType: int = socketType
-        self._edgeList: Set[Optional[JGraphicEdge]] = set()
-        self._multiConnectionType: bool = multiConnectionType
+        self._multiConnection: bool = multiConnection
 
         self._InitVariables()
         self.initUI()
@@ -50,6 +48,7 @@ class JGraphicSocket(QGraphicsItem):
         self._brushSocket = QtGui.QBrush(self._colorBackground)
         self._penOutline.setWidthF(GRSOCKET_WIDTH_OUTLINE)
         self._colorHover = QtGui.QColor(GRSOCKET_COLOR_HOVER)
+        self._edgeList: Set[Optional[JGraphicEdge]] = set()
 
     def initUI(self):
         self.setZValue(1)
@@ -67,12 +66,20 @@ class JGraphicSocket(QGraphicsItem):
             self._penOutline
         )  # if not self.isSelected() else self._penSelected)
         painter.setBrush(self._brushSocket)
-        painter.drawEllipse(
-            int(-self._radius),
-            int(-self._radius),
-            int(2 * self._radius),
-            int(2 * self._radius),
-        )
+        if self._multiConnection:
+            painter.drawRect(
+                int(-self._radius),
+                int(-self._radius),
+                int(2 * self._radius),
+                int(2 * self._radius),
+            )
+        else:
+            painter.drawEllipse(
+                int(-self._radius),
+                int(-self._radius),
+                int(2 * self._radius),
+                int(2 * self._radius),
+            )
 
     def boundingRect(self) -> QtCore.QRectF:
         return QtCore.QRectF(
@@ -84,32 +91,35 @@ class JGraphicSocket(QGraphicsItem):
 
     @property
     def multiConnectionType(self):
-        return self._multiConnectionType
+        return self._multiConnection
 
     @property
     def edgeList(self):
         return self._edgeList
 
-    @edgeList.setter
-    def edgeList(self, value) -> None:
-        assert value is not None
-        self._edgeList.add(value)
+    def AddEdge(self, edge: JGraphicEdge) -> None:
+        assert edge is not None
+        assert not self.AtMaxEdgeLimit(), logger.warning("max edge limit reached")
+        self._edgeList.add(edge)
 
-    def RemoveEdge(self, edge):
-        # assert isinstance(edge, JGraphicEdge)
+    def RemoveEdge(self, edge: JGraphicEdge):
         self._edgeList.discard(edge)
 
-    def HasEdge(self, edge) -> bool:
-        # assert isinstance(edge, JGraphicEdge)
+    def EdgeCount(self) -> int:
+        return len(self._edgeList)
+
+    def HasEdge(self, edge: JGraphicEdge) -> bool:
+        assert edge is not None
         return True if edge in self._edgeList else False
 
-    def CanAddEdge(self) -> bool:
-        if self._multiConnectionType:
-            return True
-        elif not self._multiConnectionType and len(self._edgeList) == 0:
-            return True
-        else:
+    def AtMaxEdgeLimit(self) -> bool:
+        if self._multiConnection:
             return False
+        # * can add one edge to single connection type
+        elif not self._multiConnection and len(self._edgeList) == 0:
+            return False
+        else:
+            return True
 
     def mousePressEvent(self, event: QGraphicsSceneMouseEvent) -> None:
         return super().mousePressEvent(event)

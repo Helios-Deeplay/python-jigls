@@ -21,10 +21,7 @@ except:
 
 
 class JNodeSocketManager:
-    def __init__(self, parent, inSockets: int = 1, outSockets: int = 1) -> None:
-
-        assert inSockets >= 1
-        assert outSockets >= 1
+    def __init__(self, parent) -> None:
 
         self._parentNode: JGraphicNode = parent
 
@@ -33,64 +30,81 @@ class JNodeSocketManager:
 
         self._InitVariables()
 
-        for _ in range(inSockets):
-            self.AddInputSocket()
-        for _ in range(outSockets):
-            self.AddOutputSocket()
-
     def _InitVariables(self):
         self._socketSpacing = GRSOCKET_SPACING
         self._socketCount: int = 0
 
     @property
-    def socketCount(self):
-        return self._socketCount
-
-    @property
-    def inSocketCount(self):
+    def inSocketCount(self) -> int:
         return len(self._inSocketsList)
 
     @property
-    def outSocketCount(self):
+    def outSocketCount(self) -> int:
         return len(self._outSocketsList)
 
+    @property
+    def socketCount(self) -> int:
+        return self._socketCount
+
     def GetInputSocketByIndex(self, index: int) -> JGraphicSocket:
+        assert index <= len(self._inSocketsList)
         return self._inSocketsList[index]
 
     def GetOutputSocketByIndex(self, index: int) -> JGraphicSocket:
+        assert index <= len(self._outSocketsList)
         return self._outSocketsList[index]
 
     def GetInputSocketPosByIndex(self, index: int) -> QPointF:
+        assert index <= len(self._inSocketsList)
         return self.GetInputSocketByIndex(index).pos()
 
     def GetOutputSocketPosByIndex(self, index: int) -> QPointF:
+        assert index <= len(self._outSocketsList)
         return self.GetOutputSocketByIndex(index).pos()
 
-    def AddInputSocket(self, position=GRSOCKET_POS_LEFT_BOTTOM) -> int:
+    def AddSocket(self, type, multiConnection: bool = True) -> int:
+        if type == GRSOCKET_TYPE_INPUT:
+            return self.AddInputSocket(multiConnection=multiConnection)
+        elif type == GRSOCKET_TYPE_OUTPUT:
+            return self.AddOutputSocket(multiConnection=multiConnection)
+        else:
+            return -1
+
+    def AddInputSocket(
+        self, multiConnection: bool = True, position=GRSOCKET_POS_LEFT_BOTTOM
+    ) -> int:
 
         socket = JGraphicSocket(
-            self._parentNode, self._socketCount, GRSOCKET_TYPE_INPUT
+            parent=self._parentNode,
+            index=self._socketCount,
+            socketType=GRSOCKET_TYPE_INPUT,
+            multiConnection=multiConnection,
         )
 
-        socket.setPos(self.CalcSocketPos(len(self._inSocketsList), position))
+        socket.setPos(self._CalculateSocketPos(len(self._inSocketsList), position))
 
         self._inSocketsList.append(socket)
         self._socketCount += 1
         return self._socketCount - 1
 
-    def AddOutputSocket(self, position=GRSOCKET_POS_RIGHT_TOP) -> int:
+    def AddOutputSocket(
+        self, multiConnection: bool = True, position=GRSOCKET_POS_RIGHT_TOP
+    ) -> int:
 
         socket = JGraphicSocket(
-            self._parentNode, self._socketCount, GRSOCKET_TYPE_OUTPUT
+            parent=self._parentNode,
+            index=self._socketCount,
+            socketType=GRSOCKET_TYPE_OUTPUT,
+            multiConnection=multiConnection,
         )
 
-        socket.setPos(self.CalcSocketPos(len(self._outSocketsList), position))
+        socket.setPos(self._CalculateSocketPos(len(self._outSocketsList), position))
 
         self._outSocketsList.append(socket)
         self._socketCount += 1
         return self._socketCount - 1
 
-    def CalcSocketPos(self, index: int, position: int) -> QPointF:
+    def _CalculateSocketPos(self, index: int, position: int) -> QPointF:
 
         # * left posiition
         x = 0

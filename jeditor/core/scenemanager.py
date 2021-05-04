@@ -4,8 +4,27 @@ from typing import List
 from PyQt5.QtCore import QPointF
 from .contentwidget import JNodeContent
 from .graphicnode import JGraphicNode
-from .constants import GREDGE_PATH_BEZIER, GRSCENE_HEIGHT, GRSCENE_WIDTH
+from .constants import (
+    GREDGE_PATH_BEZIER,
+    GRSCENE_HEIGHT,
+    GRSCENE_WIDTH,
+    GRSOCKET_TYPE_INPUT,
+    GRSOCKET_TYPE_OUTPUT,
+)
 from .graphicscene import JiglsGraphicScene
+
+
+def DevNode(inputMulti, outputMulti, inputs=1, output=1):
+    node = JGraphicNode(nodeContent=JNodeContent())
+    for _ in range(inputs):
+        node.socketManager.AddSocket(
+            type=GRSOCKET_TYPE_INPUT, multiConnection=inputMulti
+        )
+    for _ in range(output):
+        node.socketManager.AddSocket(
+            type=GRSOCKET_TYPE_OUTPUT, multiConnection=outputMulti
+        )
+    return node
 
 
 class JSceneManager:
@@ -39,9 +58,9 @@ class JSceneManager:
         self.nodes.remove(edge)
 
     def _debug(self):
-        node1 = JGraphicNode(inSockets=1, outSockets=1, nodeContent=JNodeContent())
-        node2 = JGraphicNode(inSockets=1, outSockets=1, nodeContent=JNodeContent())
-        node3 = JGraphicNode(inSockets=1, outSockets=1, nodeContent=JNodeContent())
+        node1 = DevNode(False, False)
+        node2 = DevNode(True, True)
+        node3 = DevNode(True, False)
         # node4 = JGraphicNode(inSockets=1, outSockets=1, nodeContent=JNodeContent())
 
         node1.setPos(QPointF(-350, -250))
@@ -53,18 +72,18 @@ class JSceneManager:
         self.graphicsScene.addItem(node3)
         # self.graphicsScene.addItem(node4)
 
-        edge1 = JGraphicEdge(
-            node2.socketManager.GetOutputSocketByIndex(0),
-            node3.socketManager.GetInputSocketByIndex(0),
-        )
-        edge2 = JGraphicEdge(
-            node2.socketManager.GetOutputSocketByIndex(0),
-            node1.socketManager.GetInputSocketByIndex(0),
-            edgePathType=GREDGE_PATH_BEZIER,
-        )
+        # edge1 = JGraphicEdge(
+        #     node2.socketManager.GetOutputSocketByIndex(0),
+        #     node3.socketManager.GetInputSocketByIndex(0),
+        # )
+        # edge2 = JGraphicEdge(
+        #     node2.socketManager.GetOutputSocketByIndex(0),
+        #     node1.socketManager.GetInputSocketByIndex(0),
+        #     edgePathType=GREDGE_PATH_BEZIER,
+        # )
 
-        self.graphicsScene.addItem(edge1)
-        self.graphicsScene.addItem(edge2)
+        # self.graphicsScene.addItem(edge1)
+        # self.graphicsScene.addItem(edge2)
 
         # node3 = JGraphicNode(inSockets=2, outSockets=2, nodeContent=JNodeContent())
         # node3.setPos(QPointF(200, -150))

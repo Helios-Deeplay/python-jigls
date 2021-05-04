@@ -3,3 +3,5 @@
 3. https://www.youtube.com/playlist?list=PLZSNHzwDCOggHLThIbCxUhWTgrKVemZkz
 4. https://tomroth.com.au/compgraph1/
 5. https://www.cs.toronto.edu/~rgrosse/courses/csc321_2018/slides/lec10.pdf
+
+https://het.as.utexas.edu/HET/Software/PyQt/
