@@ -1,16 +1,21 @@
 
+
 21-05-03:
   tasks:
     ✔ rework socket manager class @high @done(21-05-03 20:01)
     ✔ rework node @high @done(21-05-03 20:01)
     ✔ rework edge class @done(21-05-03 20:01)
-    ☐ refactor all classes to properly use properties @started(21-05-03 19:55)
-    ☐ implement serialization @started(21-05-03 19:56)
+    ✔ refactor all classes to properly use properties @started(21-05-03 19:55) @done(21-05-04 12:10) @lasted(16h15m44s)
+    ✔ check duplicate edges @done(21-05-04 12:10)
+    ☐ deleting items from scene @started(21-05-04 13:30)
+    ☐ implement serialization
     ☐ implement deserialization
 
   bug checks:
     ✔ double check newly added edges if the sockets are updated properly @done(21-05-03 19:55)
     ☐ qt cursortype grablink not working when creating edges @low
+    ☐ try to avoid circular dependancy sockets and edges @low 
   
   feature:
     ✔ mutli sockets diffrent shape @done(21-05-03 19:57) # square
+    ✔ dragging edge different style @started(21-05-04 13:33) @done(21-05-04 13:33) @lasted(49s)

@@ -26,17 +26,11 @@ class Network(object):
 
         assert operation.name, "Operation must be named"
 
-        assert (
-            operation.needs is not None
-        ), "Operation's 'needs' must be named"
+        assert operation.needs is not None, "Operation's 'needs' must be named"
 
-        assert (
-            operation.provides is not None
-        ), "Operation's 'provides' must be named"
+        assert operation.provides is not None, "Operation's 'provides' must be named"
 
-        assert (
-            operation not in self.graph.nodes()
-        ), "Operation may only be added once"
+        assert operation not in self.graph.nodes(), "Operation may only be added once"
 
         for n in operation.needs:
             self.graph.add_edge(DataPlaceholderNode(n), operation)
@@ -61,11 +55,7 @@ class Network(object):
                 "possible no operations in network / network was not compiled properly"
             )
 
-        return [
-            (s.name, s)
-            for s in self.steps
-            if isinstance(s, AbstractOperation)
-        ]
+        return [(s.name, s) for s in self.steps if isinstance(s, AbstractOperation)]
 
     def ShowLayers(self):
         for name, step in self.ListLayers():
@@ -94,10 +84,7 @@ class Network(object):
 
                 for predecessor in self.graph.predecessors(node):
                     if self._debug:
-                        print(
-                            "checking if node %s can be deleted"
-                            % predecessor
-                        )
+                        print("checking if node %s can be deleted" % predecessor)
 
                     predecessor_still_needed = False
 
@@ -109,22 +96,15 @@ class Network(object):
 
                     if not predecessor_still_needed:
                         if self._debug:
-                            print(
-                                "  adding delete instruction for %s"
-                                % predecessor
-                            )
+                            print("  adding delete instruction for %s" % predecessor)
                         self.steps.append(DeleteInstruction(predecessor))
 
             else:
-                raise TypeError(
-                    "Unrecognized network graph node %s" % node
-                )
+                raise TypeError("Unrecognized network graph node %s" % node)
 
     def _EvaluateNecessarySteps(self, outputs, inputs):
         outputs = (
-            tuple(sorted(outputs))
-            if isinstance(outputs, (list, set))
-            else outputs
+            tuple(sorted(outputs)) if isinstance(outputs, (list, set)) else outputs
         )
 
         inputs_keys = tuple(sorted(inputs.keys()))
@@ -158,9 +138,7 @@ class Network(object):
 
             necessary_nodes -= unnecessary_nodes
 
-        necessary_steps = [
-            step for step in self.steps if step in necessary_nodes
-        ]
+        necessary_steps = [step for step in self.steps if step in necessary_nodes]
 
         # save this result in a precomputed cache for future lookup
         self._necessary_steps_cache[cache_key] = necessary_steps
@@ -171,9 +149,7 @@ class Network(object):
     def Compute(self, outputs, named_inputs, method=None):
 
         # assert that network has been compiled
-        assert (
-            self.steps
-        ), "network must be compiled before calling compute."
+        assert self.steps, "network must be compiled before calling compute."
 
         assert (
             isinstance(outputs, (list, tuple)) or outputs is None
@@ -308,9 +284,7 @@ class Network(object):
             return {k: cache[k] for k in iter(cache) if k in outputs}
 
     # ! should be provided and overwritten by data class
-    def _CacheUpdateOutput(
-        self, cache: Dict[str, Data], output: Dict[str, Data]
-    ):
+    def _CacheUpdateOutput(self, cache: Dict[str, Data], output: Dict[str, Data]):
         for k, v in output.items():
             if k in cache:
                 if v.GetData():
@@ -374,9 +348,7 @@ class NetworkOperation(AbstractOperation):
         self._executionMethod = "sequential"
 
     def _Compute(self, named_inputs, outputs=None):
-        return self.net.Compute(
-            outputs, named_inputs, method=self._executionMethod
-        )
+        return self.net.Compute(outputs, named_inputs, method=self._executionMethod)
 
     def __call__(self, *args, **kwargs):
         return self._Compute(*args, **kwargs)
@@ -423,9 +395,7 @@ class NetworkCompose(object):
             seen_add = seen.add
             return [x for x in seq if not (x in seen or seen_add(x))]
 
-        provides = OrderPreservingUniquifier(
-            chain(*[op.provides for op in operations])
-        )
+        provides = OrderPreservingUniquifier(chain(*[op.provides for op in operations]))
         needs = OrderPreservingUniquifier(
             chain(*[op.needs for op in operations]), set(provides)
         )

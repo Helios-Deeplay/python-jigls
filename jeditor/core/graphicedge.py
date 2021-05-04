@@ -3,6 +3,7 @@ from typing import Optional
 
 from jeditor.core.constants import (
     GREDGE_COLOR_DEFAULT,
+    GREDGE_COLOR_DRAG,
     GREDGE_COLOR_SELECTED,
     GREDGE_PATH_BEZIER,
     GREDGE_PATH_DIRECT,
@@ -21,7 +22,7 @@ try:
 except:
     pass
 from jeditor.logger import logger
-from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5 import QtCore, QtGui
 from PyQt5.QtWidgets import (
     QGraphicsItem,
     QGraphicsPathItem,
@@ -67,9 +68,6 @@ class JGraphicEdge(QGraphicsPathItem):
 
     @property
     def tempDragPos(self) -> QtCore.QPointF:
-        raise UserWarning(
-            f"fetching temp position disabled at the moment, use destination pos"
-        )
         return self._tempDragPos
 
     @tempDragPos.setter
@@ -109,10 +107,14 @@ class JGraphicEdge(QGraphicsPathItem):
     def _InitVariables(self):
         self._edgeColor = QtGui.QColor(GREDGE_COLOR_DEFAULT)
         self._edgeColorSelected = QtGui.QColor(GREDGE_COLOR_SELECTED)
+        self._edgeColorDrag = QtGui.QColor(GREDGE_COLOR_DRAG)
         self._edgePen = QtGui.QPen(self._edgeColor)
         self._edgePenSelected = QtGui.QPen(self._edgeColorSelected)
+        self._edgePenDrag = QtGui.QPen(self._edgeColorDrag)
         self._edgePen.setWidthF(GREDGE_WIDTH)
         self._edgePenSelected.setWidthF(GREDGE_WIDTH)
+        self._edgePenDrag.setWidthF(GREDGE_WIDTH)
+        self._edgePenDrag.setStyle(QtCore.Qt.DashLine)
 
         self._startSocket.AddEdge(self)
         if self._destinationSocket is not None:
@@ -125,10 +127,13 @@ class JGraphicEdge(QGraphicsPathItem):
         widget: Optional[QWidget],
     ) -> None:
 
-        self.UpdatePath()
         painter.setPen(self._edgePenSelected if self.isSelected() else self._edgePen)
+        if self.destinationSocket is None:
+            painter.setPen(self._edgePenDrag)
         painter.setBrush(QtCore.Qt.NoBrush)
         painter.drawPath(self.path())
+
+        self.UpdatePath()
 
     def RemoveFromSockets(self):
         if self._startSocket is not None:

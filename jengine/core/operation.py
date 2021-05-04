@@ -18,11 +18,7 @@ class Operation(AbstractOperation):
 
     def Compute(self, named_inputs, outputs=None):
 
-        inputs = [
-            named_inputs[d]
-            for d in self.needs
-            if not isinstance(d, OptionalArg)
-        ]
+        inputs = [named_inputs[d] for d in self.needs if not isinstance(d, OptionalArg)]
 
         optionals = {
             n: named_inputs[n]
@@ -30,9 +26,7 @@ class Operation(AbstractOperation):
             if isinstance(n, OptionalArg) and n in named_inputs
         }
 
-        kwargs = {
-            k: v for d in (self.params, optionals) for k, v in d.items()
-        }
+        kwargs = {k: v for d in (self.params, optionals) for k, v in d.items()}
 
         result = self.fn(*inputs, **kwargs)  # type:ignore
 
@@ -86,27 +80,19 @@ class OperationCompose(AbstractOperation):
         assert kwargs["name"], "operation needs a name"
 
         if "needs" in kwargs and type(kwargs["needs"]) == str:
-            assert kwargs[
-                "needs"
-            ], "empty string provided for `needs` parameters"
+            assert kwargs["needs"], "empty string provided for `needs` parameters"
 
             kwargs["needs"] = [kwargs["needs"]]
 
         # Allow single value for provides parameter
         if "provides" in kwargs and type(kwargs["provides"]) == str:
-            assert kwargs[
-                "provides"
-            ], "empty string provided for `needs` parameters"
+            assert kwargs["provides"], "empty string provided for `needs` parameters"
 
             kwargs["provides"] = [kwargs["provides"]]
 
-        assert (
-            type(kwargs["needs"]) == list
-        ), "no `needs` parameter provided"
+        assert type(kwargs["needs"]) == list, "no `needs` parameter provided"
 
-        assert (
-            type(kwargs["provides"]) == list
-        ), "no `provides` parameter provided"
+        assert type(kwargs["provides"]) == list, "no `provides` parameter provided"
 
         assert hasattr(
             kwargs["fn"], "__call__"

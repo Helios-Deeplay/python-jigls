@@ -15,9 +15,9 @@ class TestCore(unittest.TestCase):
     def test_sum(self):
         """bind operation function"""
 
-        op_sum = OperationCompose(
-            name="op_sum", needs=["a", "b"], provides=["sum_ab"]
-        )(add)
+        op_sum = OperationCompose(name="op_sum", needs=["a", "b"], provides=["sum_ab"])(
+            add
+        )
 
         self.assertEqual(op_sum(1, 2), 3)
 
@@ -81,9 +81,9 @@ class TestCore(unittest.TestCase):
 
     def test_compose(self):
 
-        op_sum = OperationCompose(
-            name="op_sum", needs=["a", "b"], provides=["sum_ab"]
-        )(add)
+        op_sum = OperationCompose(name="op_sum", needs=["a", "b"], provides=["sum_ab"])(
+            add
+        )
 
         @OperationCompose(
             name="op_mul",
@@ -140,12 +140,10 @@ class TestCore(unittest.TestCase):
 
         # Compose the mul, sub, and abspow operations into a computation graph.
         net = NetworkCompose(name="graph")(
-            OperationCompose(
-                name="mul1", needs=["a", "b"], provides=["ab"]
-            )(mul),
-            OperationCompose(
-                name="sub1", needs=["a", "ab"], provides=["a_minus_ab"]
-            )(sub),
+            OperationCompose(name="mul1", needs=["a", "b"], provides=["ab"])(mul),
+            OperationCompose(name="sub1", needs=["a", "ab"], provides=["a_minus_ab"])(
+                sub
+            ),
             OperationCompose(
                 name="abspow1",
                 needs=["a_minus_ab"],

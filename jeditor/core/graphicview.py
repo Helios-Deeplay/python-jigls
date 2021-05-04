@@ -169,7 +169,7 @@ class JGraphicView(QtWidgets.QGraphicsView):
 
     def mouseReleaseEvent(self, event: QtGui.QMouseEvent):
 
-        # * Drag
+        # * Pan view
         if self._currentState == GRVIEW_OP_MODE_PAN_VIEW:
             self.setCursor(QtCore.Qt.ArrowCursor)
             self.setInteractive(True)
@@ -229,7 +229,9 @@ class JGraphicView(QtWidgets.QGraphicsView):
 
         if item.multiConnectionType:
             self._tempEdgeDragInstance = JGraphicEdge(
-                startSocket=item, destinationSocket=None
+                startSocket=item,
+                destinationSocket=None,
+                edgePathType=GREDGE_PATH_BEZIER,
             )
             self._tempEdgeDragInstance.tempDragPos = item.scenePos()
             self.scene().addItem(self._tempEdgeDragInstance)
@@ -260,31 +262,45 @@ class JGraphicView(QtWidgets.QGraphicsView):
                 self._tempEdgeDragInstance.RemoveFromSockets()
                 self.scene().removeItem(self._tempEdgeDragInstance)
                 self._ResetEdgeDrag()
+
             # * check if same socket type, intput type
             elif self._tempSocket.socketType == item.socketType:
                 logger.warning(f"tried connecting same socket type")
                 self._tempEdgeDragInstance.RemoveFromSockets()
                 self.scene().removeItem(self._tempEdgeDragInstance)
                 self._ResetEdgeDrag()
+
             # * check if connecttion possible, non multi connection type
             elif item.AtMaxEdgeLimit():
                 logger.warning(f"socket cannot add edge, maxlimit")
                 self._tempEdgeDragInstance.RemoveFromSockets()
                 self.scene().removeItem(self._tempEdgeDragInstance)
                 self._ResetEdgeDrag()
+
             # * check sockets belong to same parent
-            elif self._tempEdgeDragInstance._startSocket.parentNode == item.parentNode:
+            elif self._tempEdgeDragInstance._startSocket.parentNode is item.parentNode:
                 logger.warning(f"socket belong to same parent")
                 self._tempEdgeDragInstance.RemoveFromSockets()
                 self.scene().removeItem(self._tempEdgeDragInstance)
                 self._ResetEdgeDrag()
-            # * only add edge if all above fail
-            else:
 
+            else:
+                # * check dupliate edge
+                for edgeInScene in self.scene().items():
+                    if isinstance(edgeInScene, JGraphicEdge):
+                        if (
+                            edgeInScene.startSocket
+                            is self._tempEdgeDragInstance.startSocket
+                            and edgeInScene.destinationSocket is item
+                        ):
+                            logger.warning(f"duplicate socket")
+                            self._tempEdgeDragInstance.RemoveFromSockets()
+                            self.scene().removeItem(self._tempEdgeDragInstance)
+                            self._ResetEdgeDrag()
+                            return
+
+                # * only add edge if all above fail
                 self._tempEdgeDragInstance.destinationSocket = item
-                logger.info(
-                    f"{self._tempEdgeDragInstance.destinationSocket.socketType} - {len(self._tempEdgeDragInstance.destinationSocket.edgeList)} - {self._tempEdgeDragInstance.destinationSocket.AtMaxEdgeLimit()}"
-                )
                 self._ResetEdgeDrag()
 
         elif not isinstance(item, JGraphicSocket):
@@ -294,6 +310,9 @@ class JGraphicView(QtWidgets.QGraphicsView):
             self._ResetEdgeDrag()
             self.setCursor(QtCore.Qt.ArrowCursor)
             self.setInteractive(True)
+
+    def _DuplicateEdge(self, edge: JGraphicEdge):
+        pass
 
     def _ResetEdgeDrag(self):
         assert isinstance(self._tempEdgeDragInstance, JGraphicEdge)

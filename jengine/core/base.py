@@ -18,10 +18,7 @@ class AbstractOperation(object):
         self._after_init()
 
     def __eq__(self, other):
-        return bool(
-            self.name is not None
-            and self.name == getattr(other, "name", None)
-        )
+        return bool(self.name is not None and self.name == getattr(other, "name", None))
 
     def __hash__(self):
         return hash(self.name)
