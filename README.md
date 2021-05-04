@@ -9,4 +9,6 @@
 
 (*pronounced jiggles*) **JIGLS** **I**s a **G**raph based **L**ogic **S**imulator.
 
-## [Changelog](CHANGELOG.md) 
+### [Task](TASK.todo) 
+
+### [Changelog](CHANGELOG.md) 
