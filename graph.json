@@ -1,0 +1,75 @@
+{
+    "nodes": [
+        {
+            "identifier": "5eb8ef4a30554f26901b47d0e1639e3c",
+            "posX": 556.0,
+            "posY": -97.0,
+            "socketCount": 2,
+            "socketData": {
+                "0": {
+                    "socketType": 1,
+                    "multiConnection": true
+                },
+                "1": {
+                    "socketType": 2,
+                    "multiConnection": false
+                }
+            }
+        },
+        {
+            "identifier": "aa4c036df7694769a41bd1e8178f2204",
+            "posX": 50.0,
+            "posY": 229.0,
+            "socketCount": 2,
+            "socketData": {
+                "0": {
+                    "socketType": 1,
+                    "multiConnection": true
+                },
+                "1": {
+                    "socketType": 2,
+                    "multiConnection": true
+                }
+            }
+        },
+        {
+            "identifier": "f08b54cfa8a04e219b2a9799cb063dda",
+            "posX": -117.0,
+            "posY": -228.0,
+            "socketCount": 2,
+            "socketData": {
+                "0": {
+                    "socketType": 1,
+                    "multiConnection": false
+                },
+                "1": {
+                    "socketType": 2,
+                    "multiConnection": false
+                }
+            }
+        }
+    ],
+    "edges": [
+        {
+            "identifier": "",
+            "sourceNodePID": "5eb8ef4a30554f26901b47d0e1639e3c",
+            "sourceNodeIndex": 1,
+            "destinationNodePID": "f08b54cfa8a04e219b2a9799cb063dda",
+            "destinationNodeIndex": 0
+        },
+        {
+            "identifier": "",
+            "sourceNodePID": "f08b54cfa8a04e219b2a9799cb063dda",
+            "sourceNodeIndex": 1,
+            "destinationNodePID": "5eb8ef4a30554f26901b47d0e1639e3c",
+            "destinationNodeIndex": 0
+        },
+        {
+            "identifier": "",
+            "sourceNodePID": "aa4c036df7694769a41bd1e8178f2204",
+            "sourceNodeIndex": 1,
+            "destinationNodePID": "5eb8ef4a30554f26901b47d0e1639e3c",
+            "destinationNodeIndex": 0
+        }
+    ]
+}

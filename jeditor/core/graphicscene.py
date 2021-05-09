@@ -14,7 +14,7 @@ from PyQt5 import QtGui, QtWidgets, QtCore
 import math
 
 
-class JiglsGraphicScene(QtWidgets.QGraphicsScene):
+class JGraphicScene(QtWidgets.QGraphicsScene):
     def __init__(
         self,
         parent=None,

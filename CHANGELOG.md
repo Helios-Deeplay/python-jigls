@@ -1,5 +1,28 @@
 # Changelog
 
+## [0.5.1] - 2021-05-09
+
+### Added
+
+- check duplicate edges
+- deleting items from scene
+- editting edges, reconnecting
+- implement serialization
+- implement deserialization
+- mutli sockets diffrent shape
+
+### Changed
+
+- rework socket manager class
+- rework node
+- rework edge class
+- refactor all classes to properly use properties
+
+### Fixed
+
+- dragging edge different style
+- double check newly added edges if the sockets are updated properly
+
 ## [0.4.2] - 2021-05-02
 
 ### Added

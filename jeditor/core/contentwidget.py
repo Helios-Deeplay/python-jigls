@@ -6,6 +6,7 @@ from PyQt5.QtWidgets import (
     QGraphicsSceneMouseEvent,
     QGraphicsTextItem,
     QLabel,
+    QScrollArea,
     QStyleOptionGraphicsItem,
     QTextEdit,
     QVBoxLayout,
@@ -20,17 +21,20 @@ class JNodeContent(QWidget):
         self.initUI()
 
     def initUI(self):
-        self.layout = QVBoxLayout()  # type:ignore
-        self.layout.setContentsMargins(0, 0, 0, 0)
-        self.setLayout(self.layout)
+        # return
+        vbox = QVBoxLayout()
+        widget = QWidget()
+        widget.setLayout(vbox)
 
-        wdg_label = QLabel("Some Title")
-        wdg_label.setObjectName("1")
-        wdg_label.setHidden(False)
-        self.layout.addWidget(wdg_label)
+        scroll = QScrollArea()
+        scroll.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOn)
+        scroll.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        scroll.setWidgetResizable(True)
+        scroll.setWidget(widget)
 
-        textEdit = QTextEdit("foo")
-        textEdit.setObjectName("2")
-        textEdit.setHidden(False)
+        self.setLayout(QVBoxLayout())
+        self.layout().addWidget(scroll)
 
-        self.layout.addWidget(textEdit)
+        for i in range(1, 50):
+            object = QLabel("TextLabel")
+            vbox.addWidget(object)

@@ -1,5 +1,5 @@
 import logging
-from typing import List, Optional, Set
+from typing import List, Optional, Set, TYPE_CHECKING
 
 from jeditor.logger import logger
 from PyQt5 import QtCore, QtGui
@@ -20,27 +20,28 @@ from .constants import (
 from .graphicedge import JGraphicEdge
 
 logger = logging.getLogger(__name__)
+if TYPE_CHECKING:
+    from .graphicnode import JGraphicNode
 
 
 class JGraphicSocket(QGraphicsItem):
     def __init__(
         self,
-        parent: QGraphicsItem,
+        parent: "JGraphicNode",
         index: int,
         socketType: int,
         multiConnection: bool = True,
     ) -> None:
         super().__init__(parent=parent)
 
-        self.parentNode: QGraphicsItem = parent
+        self.parentNodeID: str = parent.nodeIdentifier
         self.index: int = index
         self.socketType: int = socketType
         self._multiConnection: bool = multiConnection
 
-        self._InitVariables()
         self.initUI()
 
-    def _InitVariables(self):
+    def initUI(self):
         self._radius = GRSOCKET_RADIUS
         self._colorOutline = QtGui.QColor(GRSOCKET_COLOR_OUTLINE)
         self._colorBackground = QtGui.QColor(GRSOCKET_COLOR_BACKGROUND)
@@ -49,8 +50,6 @@ class JGraphicSocket(QGraphicsItem):
         self._penOutline.setWidthF(GRSOCKET_WIDTH_OUTLINE)
         self._colorHover = QtGui.QColor(GRSOCKET_COLOR_HOVER)
         self._edgeList: Set[Optional[JGraphicEdge]] = set()
-
-    def initUI(self):
         self.setZValue(1)
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
         self.setAcceptHoverEvents(True)
@@ -90,12 +89,12 @@ class JGraphicSocket(QGraphicsItem):
         )
 
     @property
-    def multiConnectionType(self):
+    def multiConnection(self):
         return self._multiConnection
 
     @property
-    def edgeList(self):
-        return self._edgeList
+    def edgeList(self) -> List[Optional[JGraphicEdge]]:
+        return list(self._edgeList)
 
     def AddEdge(self, edge: JGraphicEdge) -> None:
         assert edge is not None

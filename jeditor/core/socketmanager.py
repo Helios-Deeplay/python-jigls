@@ -1,7 +1,10 @@
+import logging
 import typing
-from jeditor.core import graphicnode
-from typing import List, Tuple
+from collections import OrderedDict
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
+from jeditor.core import graphicnode
+from jeditor.logger import logger
 from PyQt5.QtCore import QPointF
 
 from .constants import (
@@ -14,10 +17,11 @@ from .constants import (
 )
 from .graphicsocket import JGraphicSocket
 
-try:
+if TYPE_CHECKING:
     from .graphicnode import JGraphicNode
-except:
-    from PyQt5.QtWidgets import QGraphicsItem
+
+
+logger = logging.getLogger(__name__)
 
 
 class JNodeSocketManager:
@@ -43,24 +47,25 @@ class JNodeSocketManager:
         return len(self._outSocketsList)
 
     @property
+    def inSocketsList(self):
+        return self._inSocketsList
+
+    @property
+    def outSocketsList(self):
+        return self._outSocketsList
+
+    @property
+    def socketList(self):
+        return self._inSocketsList + self._outSocketsList
+
+    @property
     def socketCount(self) -> int:
         return self._socketCount
 
-    def GetInputSocketByIndex(self, index: int) -> JGraphicSocket:
-        assert index <= len(self._inSocketsList)
-        return self._inSocketsList[index]
-
-    def GetOutputSocketByIndex(self, index: int) -> JGraphicSocket:
-        assert index <= len(self._outSocketsList)
-        return self._outSocketsList[index]
-
-    def GetInputSocketPosByIndex(self, index: int) -> QPointF:
-        assert index <= len(self._inSocketsList)
-        return self.GetInputSocketByIndex(index).pos()
-
-    def GetOutputSocketPosByIndex(self, index: int) -> QPointF:
-        assert index <= len(self._outSocketsList)
-        return self.GetOutputSocketByIndex(index).pos()
+    def GetSocketByIndex(self, index: int):
+        print(index)
+        print(self._inSocketsList + self._outSocketsList)
+        return list(self._inSocketsList + self._outSocketsList)[index]
 
     def AddSocket(self, type, multiConnection: bool = True) -> int:
         if type == GRSOCKET_TYPE_INPUT:
@@ -115,9 +120,9 @@ class JNodeSocketManager:
 
         # * top position
         vertPadding = (
-            self._parentNode._titleHeight
-            + self._parentNode._titlePadding
-            + self._parentNode._edgeSize
+            self._parentNode._nodeTitleHeight
+            + self._parentNode._nodeTitlePadding
+            + self._parentNode._nodeEdgeSize
         )
         y = vertPadding + index * self._socketSpacing
 
@@ -126,3 +131,20 @@ class JNodeSocketManager:
             y = self._parentNode.nodeHeight - vertPadding - index * self._socketSpacing
 
         return QPointF(x, y)
+
+    def Serialize(self):
+        res: Dict[Any, Any] = {
+            "socketCount": self._socketCount,
+        }
+        socD: Dict[int, Dict[str, int]] = {}
+        for socket in self.socketList:
+            socD.update(
+                {
+                    socket.index: {
+                        "socketType": socket.socketType,
+                        "multiConnection": socket.multiConnection,
+                    },
+                }
+            )
+        res.update({"socketData": socD})
+        return res

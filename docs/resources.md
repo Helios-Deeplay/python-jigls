@@ -5,3 +5,4 @@
 5. https://www.cs.toronto.edu/~rgrosse/courses/csc321_2018/slides/lec10.pdf
 
 https://het.as.utexas.edu/HET/Software/PyQt/
+https://colorswall.com/

@@ -1,4 +1,10 @@
 
+09-05-2021:
+  tasks:
+    ☐ refactor and structure the code
+    ☐ implement cut copy paste
+    ☐ implement undostack
+    ☐ implement edge id
 
 21-05-03:
   tasks:
@@ -7,15 +13,19 @@
     ✔ rework edge class @done(21-05-03 20:01)
     ✔ refactor all classes to properly use properties @started(21-05-03 19:55) @done(21-05-04 12:10) @lasted(16h15m44s)
     ✔ check duplicate edges @done(21-05-04 12:10)
-    ☐ deleting items from scene @started(21-05-04 13:30)
-    ☐ implement serialization
-    ☐ implement deserialization
+    ✔ deleting items from scene @started(21-05-04 13:30) @done(21-05-04 18:53) @lasted(5h23m39s)
+    ✔ editting edges, reconnecting @started(21-05-04 22:41) @done(21-05-05 10:58) @lasted(12h17m50s)
+    ✔ implement serialization @started(21-05-06 15:54) @done(21-05-08 15:20) @lasted(1d23h26m17s)
+    ✔ implement deserialization @done(21-05-09 00:17)
 
   bug checks:
     ✔ double check newly added edges if the sockets are updated properly @done(21-05-03 19:55)
     ☐ qt cursortype grablink not working when creating edges @low
-    ☐ try to avoid circular dependancy sockets and edges @low 
+    ✔ try to avoid circular dependancy sockets and edges @high @done(21-05-09 00:17)
   
   feature:
     ✔ mutli sockets diffrent shape @done(21-05-03 19:57) # square
     ✔ dragging edge different style @started(21-05-04 13:33) @done(21-05-04 13:33) @lasted(49s)
+  
+  fix:
+    ☐ edges use sockets parentID type to check condition if connecting to same parent or duplicate edges

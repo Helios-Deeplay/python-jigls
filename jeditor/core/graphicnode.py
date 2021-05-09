@@ -1,3 +1,5 @@
+import logging
+from pprint import pprint
 import typing
 from .socketmanager import JNodeSocketManager
 from .contentwidget import JNodeContent
@@ -14,9 +16,10 @@ from .constants import (
     GRNODE_TITLE_FONT_SIZE,
     GRNODE_TITLE_HEIGHT,
     GRNODE_TITLE_PADDING,
+    GRSOCKET_TYPE_INPUT,
+    GRSOCKET_TYPE_OUTPUT,
 )
-from .graphicscene import JiglsGraphicScene
-from typing import List, Optional, Tuple
+from typing import Dict, List, Optional, OrderedDict, Tuple
 from PyQt5 import QtGui, QtCore
 from PyQt5.QtWidgets import (
     QGraphicsItem,
@@ -26,6 +29,9 @@ from PyQt5.QtWidgets import (
     QStyleOptionGraphicsItem,
     QWidget,
 )
+from jeditor.logger import logger
+
+logger = logging.getLogger(__name__)
 
 
 class JGraphicNode(QGraphicsItem):
@@ -34,59 +40,23 @@ class JGraphicNode(QGraphicsItem):
         parent: Optional[QGraphicsItem] = None,
         nodeContent: Optional[JNodeContent] = None,
         title: str = "Base Node",
+        identifier: str = "",
     ) -> None:
         super().__init__(parent=parent)
 
-        self._InitVariables()
-        self.initUI()
+        self._nodeContent: Optional[JNodeContent] = nodeContent
+        self._nodeTitle: str = title
+        self._nodeIdentifier: str = identifier
 
-        self.InitTitle(title)
+        self._nodeSocketManager: JNodeSocketManager = JNodeSocketManager(self)
+        self._nodeTitleText: QGraphicsTextItem = QGraphicsTextItem(self)
+
+        self.initUI()
         self._InitContent(nodeContent)
 
-        self.socketManager = JNodeSocketManager(self)
-
-    def initUI(self):
-        self.setZValue(1)
-        self.setFlag(QGraphicsItem.ItemIsSelectable, True)
-        self.setFlag(QGraphicsItem.ItemIsMovable, True)
-        self.setFlag(QGraphicsItem.ItemIsFocusable, True)
-        # self.setFlag(QGraphicsItem.ItemSendsGeometryChanges, True)
-
-    def _InitVariables(self):
-        self._titleColor = QtCore.Qt.white
-        self._titleFont: QtGui.QFont = QtGui.QFont(
-            GRNODE_TITLE_FONT, GRNODE_TITLE_FONT_SIZE
-        )
-        self._nodeWidth: int = GRNODE_NODE_WIDHT
-        self._nodeHeight: int = GRNODE_NODE_HEIGHT
-        self._titleHeight: float = GRNODE_TITLE_HEIGHT
-        self._titleBrush: QtGui.QBrush = QtGui.QBrush(QtGui.QColor(GRNODE_COLOR_TITLE))
-        self._titlePadding: int = GRNODE_TITLE_PADDING
-        self._edgeSize: float = GRNODE_EDGE_SIZE
-        self._penDefault: QtGui.QPen = QtGui.QPen(QtGui.QColor(GRNODE_COLOR_DEFAULT))
-        self._penSelected: QtGui.QPen = QtGui.QPen(QtGui.QColor(GRNODE_COLOR_SELECTED))
-        self._brushBackground: QtGui.QBrush = QtGui.QBrush(
-            QtGui.QColor(GRNODE_COLOR_BACKGROUND)
-        )
-        self._graphicsContent: QGraphicsProxyWidget = QGraphicsProxyWidget(self)
-
-        self._titleItem: QGraphicsTextItem = QGraphicsTextItem(self)
-
-    def InitTitle(self, title: str):
-        self._titleItem.setDefaultTextColor(self._titleColor)
-        self._titleItem.setFont(self._titleFont)
-        self._titleItem.setPos(self._titlePadding, 0)
-        self._titleItem.setTextWidth(self._nodeWidth - 2 * self._titlePadding)
-        self._titleItem.setPlainText(title)
-
     @property
-    def title(self):
-        return self._title
-
-    @title.setter
-    def title(self, value: str) -> None:
-        self._title = value
-        self._titleItem.setPlainText(value)
+    def nodeTitle(self):
+        return self._nodeTitle
 
     @property
     def nodeWidth(self):
@@ -95,6 +65,57 @@ class JGraphicNode(QGraphicsItem):
     @property
     def nodeHeight(self):
         return self._nodeHeight
+
+    @nodeTitle.setter
+    def nodeTitle(self, value: str) -> None:
+        self._nodeTitle = value
+        self._nodeTitleText.setPlainText(value)
+
+    @property
+    def nodeIdentifier(self):
+        return self._nodeIdentifier
+
+    @property
+    def socketManager(self) -> JNodeSocketManager:
+        return self._nodeSocketManager
+
+    def initUI(self):
+        self.setZValue(1)
+        self.setFlag(QGraphicsItem.ItemIsSelectable, True)
+        self.setFlag(QGraphicsItem.ItemIsMovable, True)
+        self.setFlag(QGraphicsItem.ItemIsFocusable, True)
+
+        # * node dimension
+        self._nodeWidth: int = GRNODE_NODE_WIDHT
+        self._nodeHeight: int = GRNODE_NODE_HEIGHT
+        self._nodeEdgeSize: float = GRNODE_EDGE_SIZE
+        self._nodePenDefault: QtGui.QPen = QtGui.QPen(
+            QtGui.QColor(GRNODE_COLOR_DEFAULT)
+        )
+        self._nodePenSelected: QtGui.QPen = QtGui.QPen(
+            QtGui.QColor(GRNODE_COLOR_SELECTED)
+        )
+        self._nodeBrushBackground: QtGui.QBrush = QtGui.QBrush(
+            QtGui.QColor(GRNODE_COLOR_BACKGROUND)
+        )
+
+        # * title
+        self._nodeTitleColor = QtCore.Qt.black
+        self._nodeTitleFont: QtGui.QFont = QtGui.QFont(
+            GRNODE_TITLE_FONT, GRNODE_TITLE_FONT_SIZE
+        )
+        self._nodeTitleFont.setItalic(True)
+        self._nodeTitleFont.setBold(True)
+        self._nodeTitlePadding: int = GRNODE_TITLE_PADDING
+        self._nodeTitleHeight: float = GRNODE_TITLE_HEIGHT
+        self._nodeTitleBrush: QtGui.QBrush = QtGui.QBrush(
+            QtGui.QColor(GRNODE_COLOR_TITLE)
+        )
+        self._nodeTitleText.setDefaultTextColor(self._nodeTitleColor)
+        self._nodeTitleText.setFont(self._nodeTitleFont)
+        self._nodeTitleText.setPos(3 * self._nodeTitlePadding, 0)
+        self._nodeTitleText.setTextWidth(self._nodeWidth - 2 * self._nodeTitlePadding)
+        self._nodeTitleText.setPlainText(self._nodeTitle)
 
     def boundingRect(self) -> QtCore.QRectF:
         return QtCore.QRectF(
@@ -111,7 +132,7 @@ class JGraphicNode(QGraphicsItem):
         widget: Optional[QWidget],
     ) -> None:
 
-        # ? title
+        # * title
         titlePath = QtGui.QPainterPath()
         titlePath.setFillRule(QtCore.Qt.WindingFill)
 
@@ -119,27 +140,27 @@ class JGraphicNode(QGraphicsItem):
             0,
             0,
             self._nodeWidth,
-            self._titleHeight,
-            self._edgeSize,
-            self._edgeSize,
+            self._nodeTitleHeight,
+            self._nodeEdgeSize,
+            self._nodeEdgeSize,
         )
 
         titlePath.addRect(
             0,
-            self._titleHeight - self._edgeSize,
-            self._edgeSize,
-            self._edgeSize,
+            self._nodeTitleHeight - self._nodeEdgeSize,
+            self._nodeEdgeSize,
+            self._nodeEdgeSize,
         )
 
         titlePath.addRect(
-            self._nodeWidth - self._edgeSize,
-            self._titleHeight - self._edgeSize,
-            self._edgeSize,
-            self._edgeSize,
+            self._nodeWidth - self._nodeEdgeSize,
+            self._nodeTitleHeight - self._nodeEdgeSize,
+            self._nodeEdgeSize,
+            self._nodeEdgeSize,
         )
 
         painter.setPen(QtCore.Qt.NoPen)
-        painter.setBrush(self._titleBrush)
+        painter.setBrush(self._nodeTitleBrush)
         painter.drawPath(titlePath.simplified())
 
         # ? content
@@ -147,21 +168,23 @@ class JGraphicNode(QGraphicsItem):
         ContentPath.setFillRule(QtCore.Qt.WindingFill)
         ContentPath.addRoundedRect(
             0,
-            self._titleHeight,
+            self._nodeTitleHeight,
             self._nodeWidth,
-            self._nodeHeight - self._titleHeight,
-            self._edgeSize,
-            self._edgeSize,
+            self._nodeHeight - self._nodeTitleHeight,
+            self._nodeEdgeSize,
+            self._nodeEdgeSize,
         )
-        ContentPath.addRect(0, self._titleHeight, self._edgeSize, self._edgeSize)
         ContentPath.addRect(
-            self._nodeWidth - self._edgeSize,
-            self._titleHeight,
-            self._edgeSize,
-            self._edgeSize,
+            0, self._nodeTitleHeight, self._nodeEdgeSize, self._nodeEdgeSize
+        )
+        ContentPath.addRect(
+            self._nodeWidth - self._nodeEdgeSize,
+            self._nodeTitleHeight,
+            self._nodeEdgeSize,
+            self._nodeEdgeSize,
         )
         painter.setPen(QtCore.Qt.NoPen)
-        painter.setBrush(self._brushBackground)
+        painter.setBrush(self._nodeBrushBackground)
         painter.drawPath(ContentPath.simplified())
 
         # ? outline
@@ -171,22 +194,58 @@ class JGraphicNode(QGraphicsItem):
             0,
             self._nodeWidth,
             self._nodeHeight,
-            self._edgeSize,
-            self._edgeSize,
+            self._nodeEdgeSize,
+            self._nodeEdgeSize,
         )
 
-        painter.setPen(self._penDefault if not self.isSelected() else self._penSelected)
+        painter.setPen(
+            self._nodePenDefault if not self.isSelected() else self._nodePenSelected
+        )
         painter.setBrush(QtCore.Qt.NoBrush)
         painter.drawPath(outline.simplified())
 
     def _InitContent(self, nodeContent: Optional[JNodeContent]):
-        self.nodeContent = nodeContent
-
-        if self.nodeContent is not None:
-            self.nodeContent.setGeometry(
-                int(self._edgeSize),
-                int(self._titleHeight + self._edgeSize),
-                int(self._nodeWidth - 2 * self._edgeSize),
-                int(self._nodeHeight - 2 * self._edgeSize - self._titleHeight),
+        # nodeContent = None
+        if nodeContent is not None:
+            self._graphicsNodeContent = QGraphicsProxyWidget(self)
+            nodeContent.setGeometry(
+                int(self._nodeEdgeSize),
+                int(self._nodeTitleHeight + self._nodeEdgeSize),
+                int(self._nodeWidth - 2 * self._nodeEdgeSize),
+                int(self._nodeHeight - 2 * self._nodeEdgeSize - self._nodeTitleHeight),
             )
-            self._graphicsContent.setWidget(self.nodeContent)
+            self._graphicsNodeContent.setWidget(nodeContent)
+
+    def Serialize(self) -> OrderedDict:
+
+        node = OrderedDict(
+            {
+                "identifier": self._nodeIdentifier,
+                "posX": self.pos().x(),
+                "posY": self.pos().y(),
+            }
+        )
+        node.update(self._nodeSocketManager.Serialize())
+        return node
+
+    @classmethod
+    def Deserialize(cls, data: Dict):
+        # {
+        #     "identifier": "5eb8ef4a30554f26901b47d0e1639e3c",
+        #     "posX": 384.0,
+        #     "posY": -147.0,
+        #     "socketCount": 2,
+        #     "socketData": {
+        #         "0": {"socketType": 1, "multiConnection": true},
+        #         "1": {"socketType": 2, "multiConnection": false},
+        #     },
+        # },
+        instance = cls(identifier=data["identifier"])
+        instance.setPos(QtCore.QPointF(data["posX"], data["posY"]))
+        for _, socket in data["socketData"].items():
+            if socket["socketType"] == GRSOCKET_TYPE_INPUT:
+                instance.socketManager.AddInputSocket(socket["multiConnection"])
+            elif socket["socketType"] == GRSOCKET_TYPE_OUTPUT:
+                instance.socketManager.AddOutputSocket(socket["multiConnection"])
+
+        return instance

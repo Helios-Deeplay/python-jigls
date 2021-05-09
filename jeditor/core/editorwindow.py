@@ -3,7 +3,7 @@ from .graphicnode import JGraphicNode
 from .scenemanager import JSceneManager
 from .graphicview import JGraphicView
 from PyQt5.QtGui import QBrush, QFont, QPen
-from .graphicscene import JiglsGraphicScene
+from .graphicscene import JGraphicScene
 
 from PyQt5 import QtWidgets, QtCore
 
@@ -31,7 +31,7 @@ class JEditorWindow(QtWidgets.QWidget):
         self._sceneManager = JSceneManager()
 
         # * graphic view here
-        self._graphicsView = JGraphicView(self.graphicsScene, self)
+        self._graphicsView = JGraphicView(self._sceneManager, self)
         self.layout_.addWidget(self._graphicsView)
 
     @property

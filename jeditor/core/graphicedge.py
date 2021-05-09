@@ -1,7 +1,8 @@
+from collections import OrderedDict
 import logging
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
-from jeditor.core.constants import (
+from .constants import (
     GREDGE_COLOR_DEFAULT,
     GREDGE_COLOR_DRAG,
     GREDGE_COLOR_SELECTED,
@@ -10,17 +11,16 @@ from jeditor.core.constants import (
     GREDGE_PATH_SQUARE,
     GREDGE_WIDTH,
 )
-from jeditor.core.graphicedgepath import (
+from .graphicedgepath import (
     JGraphicEdgeBezier,
     JGraphicEdgeDirect,
     JGraphicEdgeSquare,
 )
 
-try:
-    # ? just using for typing. need to resolve circular imports
-    from jeditor.core.graphicsocket import JGraphicSocket
-except:
-    pass
+# ? just using for typing. need to resolve circular imports
+if TYPE_CHECKING:
+    from .graphicsocket import JGraphicSocket
+
 from jeditor.logger import logger
 from PyQt5 import QtCore, QtGui
 from PyQt5.QtWidgets import (
@@ -36,13 +36,15 @@ logger = logging.getLogger(__name__)
 class JGraphicEdge(QGraphicsPathItem):
     def __init__(
         self,
-        startSocket,
-        destinationSocket,
+        startSocket: "JGraphicSocket",
+        destinationSocket: Optional["JGraphicSocket"],
         parent: Optional[QGraphicsPathItem] = None,
-        edgePathType: int = GREDGE_PATH_DIRECT,
+        edgePathType: int = GREDGE_PATH_BEZIER,
+        indentifier: str = "",
     ) -> None:
         super().__init__(parent=parent)
 
+        self._identifier: str = indentifier
         self._startSocket: JGraphicSocket = startSocket
         self._destinationSocket: Optional[JGraphicSocket] = destinationSocket
         self._edgePathType: int = edgePathType
@@ -56,11 +58,15 @@ class JGraphicEdge(QGraphicsPathItem):
         return self._startSocket
 
     @property
+    def identifier(self):
+        return self._identifier
+
+    @property
     def destinationSocket(self):
         return self._destinationSocket
 
     @destinationSocket.setter
-    def destinationSocket(self, socket) -> None:
+    def destinationSocket(self, socket: "JGraphicSocket") -> None:
         assert not socket.AtMaxEdgeLimit(), logger.warning("max edge limit reached")
         self._destinationSocket = socket
         self._destinationSocket.AddEdge(self)
@@ -159,3 +165,23 @@ class JGraphicEdge(QGraphicsPathItem):
             self.setPath(
                 JGraphicEdgeDirect.GetPath(self.sourcePos, self.destinationPos)
             )
+
+    def Serialize(self):
+        return OrderedDict(
+            [
+                ("identifier", self._identifier),
+                ("sourceNodePID", self.startSocket.parentNodeID),
+                ("sourceNodeIndex", self.startSocket.index),
+                ("destinationNodePID", self.destinationSocket.parentNodeID),
+                ("destinationNodeIndex", self.destinationSocket.index),
+            ]
+        )
+
+    @classmethod
+    def Deserialize(cls, identifier, startSocket, destinationSocket):
+        return JGraphicEdge(
+            indentifier=identifier,
+            startSocket=startSocket,
+            destinationSocket=destinationSocket,
+            edgePathType=GREDGE_PATH_BEZIER,
+        )
