@@ -1,25 +1,9 @@
-from collections import OrderedDict
+from __future__ import annotations
+
 import logging
+import uuid
+from collections import OrderedDict
 from typing import TYPE_CHECKING, Optional
-
-from .constants import (
-    GREDGE_COLOR_DEFAULT,
-    GREDGE_COLOR_DRAG,
-    GREDGE_COLOR_SELECTED,
-    GREDGE_PATH_BEZIER,
-    GREDGE_PATH_DIRECT,
-    GREDGE_PATH_SQUARE,
-    GREDGE_WIDTH,
-)
-from .graphicedgepath import (
-    JGraphicEdgeBezier,
-    JGraphicEdgeDirect,
-    JGraphicEdgeSquare,
-)
-
-# ? just using for typing. need to resolve circular imports
-if TYPE_CHECKING:
-    from .graphicsocket import JGraphicSocket
 
 from jeditor.logger import logger
 from PyQt5 import QtCore, QtGui
@@ -30,27 +14,42 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
+from .constants import (
+    GREDGE_COLOR_DEFAULT,
+    GREDGE_COLOR_DRAG,
+    GREDGE_COLOR_SELECTED,
+    GREDGE_PATH_BEZIER,
+    GREDGE_PATH_DIRECT,
+    GREDGE_PATH_SQUARE,
+    GREDGE_WIDTH,
+)
+from .graphicedgepath import JGraphicEdgeBezier, JGraphicEdgeDirect, JGraphicEdgeSquare
+from .graphicsocket import JGraphicSocket
+
 logger = logging.getLogger(__name__)
 
 
 class JGraphicEdge(QGraphicsPathItem):
     def __init__(
         self,
+        edgeId: str,
         startSocket: "JGraphicSocket",
         destinationSocket: Optional["JGraphicSocket"],
         parent: Optional[QGraphicsPathItem] = None,
         edgePathType: int = GREDGE_PATH_BEZIER,
-        indentifier: str = "",
     ) -> None:
         super().__init__(parent=parent)
 
-        self._identifier: str = indentifier
+        self._edgeId: str = edgeId
         self._startSocket: JGraphicSocket = startSocket
         self._destinationSocket: Optional[JGraphicSocket] = destinationSocket
         self._edgePathType: int = edgePathType
-        self._tempDragPos: QtCore.QPointF = QtCore.QPointF()
+        self._dragPos: QtCore.QPointF = QtCore.QPointF()
 
-        self._InitVariables()
+        self._startSocket.ConnectEdge(self._edgeId)
+        if self._destinationSocket is not None:
+            self._destinationSocket.ConnectEdge(self._edgeId)
+
         self.initUI()
 
     @property
@@ -58,8 +57,8 @@ class JGraphicEdge(QGraphicsPathItem):
         return self._startSocket
 
     @property
-    def identifier(self):
-        return self._identifier
+    def edgeId(self):
+        return self._edgeId
 
     @property
     def destinationSocket(self):
@@ -67,20 +66,22 @@ class JGraphicEdge(QGraphicsPathItem):
 
     @destinationSocket.setter
     def destinationSocket(self, socket: "JGraphicSocket") -> None:
-        assert not socket.AtMaxEdgeLimit(), logger.warning("max edge limit reached")
+        assert not socket.AtMaxLimit(), logger.warning(
+            f"max edge limit reached for socket {socket.socketId}"
+        )
         self._destinationSocket = socket
-        self._destinationSocket.AddEdge(self)
-        self._tempDragPos = QtCore.QPointF()
+        self._destinationSocket.ConnectEdge(self._edgeId)
+        self._dragPos = QtCore.QPointF()
 
     @property
-    def tempDragPos(self) -> QtCore.QPointF:
-        return self._tempDragPos
+    def DragPos(self) -> QtCore.QPointF:
+        return self._dragPos
 
-    @tempDragPos.setter
-    def tempDragPos(self, pos: QtCore.QPointF):
-        self._tempDragPos = pos
+    @DragPos.setter
+    def DragPos(self, pos: QtCore.QPointF):
+        self._dragPos = pos
         if self._destinationSocket is not None:
-            self._destinationSocket.RemoveEdge(self)
+            self._destinationSocket.DisconnectEdge(self._edgeId)
             logger.info("removed edge from destination socket, edge is repositioning")
             self._destinationSocket = None
 
@@ -92,7 +93,7 @@ class JGraphicEdge(QGraphicsPathItem):
     def destinationPos(self) -> QtCore.QPointF:
         if self._destinationSocket is not None:
             return self._destinationSocket.scenePos()
-        return self._tempDragPos
+        return self._dragPos
 
     @property
     def endPos(self) -> QtCore.QPointF:
@@ -110,7 +111,6 @@ class JGraphicEdge(QGraphicsPathItem):
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
         self.setZValue(-1.0)
 
-    def _InitVariables(self):
         self._edgeColor = QtGui.QColor(GREDGE_COLOR_DEFAULT)
         self._edgeColorSelected = QtGui.QColor(GREDGE_COLOR_SELECTED)
         self._edgeColorDrag = QtGui.QColor(GREDGE_COLOR_DRAG)
@@ -121,10 +121,6 @@ class JGraphicEdge(QGraphicsPathItem):
         self._edgePenSelected.setWidthF(GREDGE_WIDTH)
         self._edgePenDrag.setWidthF(GREDGE_WIDTH)
         self._edgePenDrag.setStyle(QtCore.Qt.DashLine)
-
-        self._startSocket.AddEdge(self)
-        if self._destinationSocket is not None:
-            self._destinationSocket.AddEdge(self)
 
     def paint(
         self,
@@ -141,11 +137,11 @@ class JGraphicEdge(QGraphicsPathItem):
 
         self.UpdatePath()
 
-    def RemoveFromSockets(self):
+    def DisconnectFromSockets(self):
         if self._startSocket is not None:
-            self._startSocket.RemoveEdge(self)
+            self._startSocket.DisconnectEdge(self._edgeId)
         if self._destinationSocket is not None:
-            self._destinationSocket.RemoveEdge(self)
+            self._destinationSocket.DisconnectEdge(self._edgeId)
 
     def UpdatePath(self, *args, **kwargs):
         if self.edgePathType == GREDGE_PATH_DIRECT:
@@ -169,19 +165,31 @@ class JGraphicEdge(QGraphicsPathItem):
     def Serialize(self):
         return OrderedDict(
             [
-                ("identifier", self._identifier),
-                ("sourceNodePID", self.startSocket.parentNodeID),
-                ("sourceNodeIndex", self.startSocket.index),
-                ("destinationNodePID", self.destinationSocket.parentNodeID),
-                ("destinationNodeIndex", self.destinationSocket.index),
+                ("edgeId", self._edgeId),
+                ("sourceSocketId", self.startSocket.socketId),
+                ("desitnationSocketId", self.destinationSocket.socketId),
             ]
         )
 
     @classmethod
-    def Deserialize(cls, identifier, startSocket, destinationSocket):
+    def Deserialize(cls, edgeId, startSocket, destinationSocket) -> JGraphicEdge:
         return JGraphicEdge(
-            indentifier=identifier,
+            edgeId=edgeId,
             startSocket=startSocket,
             destinationSocket=destinationSocket,
             edgePathType=GREDGE_PATH_BEZIER,
         )
+
+    @classmethod
+    def DragNewEdge(
+        cls, startSocket: JGraphicSocket, dragPos: QtCore.QPointF
+    ) -> JGraphicEdge:
+        edgeId = uuid.uuid4().hex
+        instanceEdge = JGraphicEdge(
+            edgeId=edgeId,
+            startSocket=startSocket,
+            destinationSocket=None,
+            edgePathType=GREDGE_PATH_BEZIER,
+        )
+        instanceEdge.DragPos = dragPos
+        return instanceEdge

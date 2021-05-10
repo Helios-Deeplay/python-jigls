@@ -14,7 +14,7 @@ class JNodeFactory:
 
     def CreateNode(
         self,
-        identifier: Optional[str],
+        nodeId: Optional[str],
         inputMulti,
         outputMulti,
         inputs=1,
@@ -22,17 +22,22 @@ class JNodeFactory:
         *args,
         **kwargs
     ):
-        if identifier is None:
-            identifier = uuid.uuid4().hex
-            print(identifier)
-        node = JGraphicNode(nodeContent=JNodeContent(), identifier=identifier)
+        if nodeId is None:
+            nodeId = uuid.uuid4().hex
+        node = JGraphicNode(nodeContent=JNodeContent(), nodeId=nodeId)
         for _ in range(inputs):
+            socketId = uuid.uuid4().hex
             node.socketManager.AddSocket(
-                type=GRSOCKET_TYPE_INPUT, multiConnection=inputMulti
+                socketId=socketId,
+                type=GRSOCKET_TYPE_INPUT,
+                multiConnection=inputMulti,
             )
         for _ in range(output):
+            socketId = uuid.uuid4().hex
             node.socketManager.AddSocket(
-                type=GRSOCKET_TYPE_OUTPUT, multiConnection=outputMulti
+                socketId=socketId,
+                type=GRSOCKET_TYPE_OUTPUT,
+                multiConnection=outputMulti,
             )
 
         return node

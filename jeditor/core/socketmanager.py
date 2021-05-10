@@ -1,13 +1,21 @@
 import logging
 import typing
 from collections import OrderedDict
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
+import uuid
 
+from PyQt5.QtWidgets import QGraphicsItem
+from PyQt5 import QtCore
 from jeditor.core import graphicnode
 from jeditor.logger import logger
 from PyQt5.QtCore import QPointF
 
 from .constants import (
+    GRNODE_EDGE_SIZE,
+    GRNODE_NODE_HEIGHT,
+    GRNODE_NODE_WIDHT,
+    GRNODE_TITLE_HEIGHT,
+    GRNODE_TITLE_PADDING,
     GRSOCKET_POS_LEFT_BOTTOM,
     GRSOCKET_POS_RIGHT_BOTTOM,
     GRSOCKET_POS_RIGHT_TOP,
@@ -25,17 +33,12 @@ logger = logging.getLogger(__name__)
 
 
 class JNodeSocketManager:
-    def __init__(self, parent) -> None:
+    def __init__(self, parent: QGraphicsItem, nodeId: str) -> None:
 
-        self._parentNode: JGraphicNode = parent
-
+        self._parent = parent
+        self._nodeId = nodeId
         self._inSocketsList: List[JGraphicSocket] = []
         self._outSocketsList: List[JGraphicSocket] = []
-
-        self._InitVariables()
-
-    def _InitVariables(self):
-        self._socketSpacing = GRSOCKET_SPACING
         self._socketCount: int = 0
 
     @property
@@ -47,40 +50,68 @@ class JNodeSocketManager:
         return len(self._outSocketsList)
 
     @property
-    def inSocketsList(self):
+    def inSocketsList(self) -> List[JGraphicSocket]:
         return self._inSocketsList
 
     @property
-    def outSocketsList(self):
+    def outSocketsList(self) -> List[JGraphicSocket]:
         return self._outSocketsList
 
     @property
-    def socketList(self):
+    def socketList(self) -> List[JGraphicSocket]:
         return self._inSocketsList + self._outSocketsList
 
     @property
     def socketCount(self) -> int:
         return self._socketCount
 
-    def GetSocketByIndex(self, index: int):
-        print(index)
-        print(self._inSocketsList + self._outSocketsList)
+    def GetSocketByIndex(self, index: int) -> JGraphicSocket:
         return list(self._inSocketsList + self._outSocketsList)[index]
 
-    def AddSocket(self, type, multiConnection: bool = True) -> int:
+    def GetSocketById(self, socketId: str) -> Optional[JGraphicSocket]:
+        socketL = list(
+            filter(lambda socket: socket.socketId == socketId, self.socketList)
+        )
+        if socketL is None:
+            return None
+        else:
+            return socketL[0]
+
+    def AddSocket(
+        self,
+        socketId: Optional[str],
+        type: int,
+        multiConnection: bool = True,
+    ) -> int:
+
+        if socketId is None:
+            socketId = uuid.uuid4().hex
+
         if type == GRSOCKET_TYPE_INPUT:
-            return self.AddInputSocket(multiConnection=multiConnection)
+            return self.AddInputSocket(
+                socketId=socketId, multiConnection=multiConnection
+            )
         elif type == GRSOCKET_TYPE_OUTPUT:
-            return self.AddOutputSocket(multiConnection=multiConnection)
+            return self.AddOutputSocket(
+                socketId=socketId, multiConnection=multiConnection
+            )
         else:
             return -1
 
     def AddInputSocket(
-        self, multiConnection: bool = True, position=GRSOCKET_POS_LEFT_BOTTOM
+        self,
+        socketId: str = None,
+        multiConnection: bool = True,
+        position=GRSOCKET_POS_LEFT_BOTTOM,
     ) -> int:
 
+        if socketId is None:
+            socketId = uuid.uuid4().hex
+
         socket = JGraphicSocket(
-            parent=self._parentNode,
+            parent=self._parent,
+            nodeId=self._nodeId,
+            socketId=socketId,
             index=self._socketCount,
             socketType=GRSOCKET_TYPE_INPUT,
             multiConnection=multiConnection,
@@ -93,11 +124,16 @@ class JNodeSocketManager:
         return self._socketCount - 1
 
     def AddOutputSocket(
-        self, multiConnection: bool = True, position=GRSOCKET_POS_RIGHT_TOP
+        self,
+        socketId: str,
+        multiConnection: bool = True,
+        position=GRSOCKET_POS_RIGHT_TOP,
     ) -> int:
 
         socket = JGraphicSocket(
-            parent=self._parentNode,
+            parent=self._parent,
+            nodeId=self._nodeId,
+            socketId=socketId,
             index=self._socketCount,
             socketType=GRSOCKET_TYPE_OUTPUT,
             multiConnection=multiConnection,
@@ -116,19 +152,15 @@ class JNodeSocketManager:
 
         # * right posiition
         if position in [GRSOCKET_POS_RIGHT_BOTTOM, GRSOCKET_POS_RIGHT_TOP]:
-            x = self._parentNode.nodeWidth
+            x = GRNODE_NODE_WIDHT
 
         # * top position
-        vertPadding = (
-            self._parentNode._nodeTitleHeight
-            + self._parentNode._nodeTitlePadding
-            + self._parentNode._nodeEdgeSize
-        )
-        y = vertPadding + index * self._socketSpacing
+        vertPadding = GRNODE_TITLE_HEIGHT + GRNODE_TITLE_PADDING + GRNODE_EDGE_SIZE
+        y = vertPadding + index * GRSOCKET_SPACING
 
         # * bottom position
         if position in [GRSOCKET_POS_LEFT_BOTTOM, GRSOCKET_POS_RIGHT_BOTTOM]:
-            y = self._parentNode.nodeHeight - vertPadding - index * self._socketSpacing
+            y = GRNODE_NODE_HEIGHT - vertPadding - index * GRSOCKET_SPACING
 
         return QPointF(x, y)
 
@@ -136,15 +168,16 @@ class JNodeSocketManager:
         res: Dict[Any, Any] = {
             "socketCount": self._socketCount,
         }
-        socD: Dict[int, Dict[str, int]] = {}
+        socD: Dict[int, Dict[str, Union[int, str]]] = {}
         for socket in self.socketList:
             socD.update(
                 {
                     socket.index: {
+                        "socketId": socket.socketId,
                         "socketType": socket.socketType,
                         "multiConnection": socket.multiConnection,
                     },
                 }
             )
-        res.update({"socketData": socD})
+        res.update({"socketInfo": socD})
         return res

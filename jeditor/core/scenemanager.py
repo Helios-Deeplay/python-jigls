@@ -1,10 +1,13 @@
-from jeditor.core.nodefactory import JNodeFactory
-from jeditor.core.graphicedge import JGraphicEdge
-from typing import Dict, List
+from jeditor.core.graphicsocket import JGraphicSocket
+import json
+import logging
+from typing import Dict, List, Optional
 
+from jeditor.core.graphicedge import JGraphicEdge
+from jeditor.core.nodefactory import JNodeFactory
+from jeditor.logger import logger
 from PyQt5.QtCore import QPointF
-from .contentwidget import JNodeContent
-from .graphicnode import JGraphicNode
+
 from .constants import (
     GREDGE_PATH_BEZIER,
     GRSCENE_HEIGHT,
@@ -12,9 +15,10 @@ from .constants import (
     GRSOCKET_TYPE_INPUT,
     GRSOCKET_TYPE_OUTPUT,
 )
+from .graphicnode import JGraphicNode
 from .graphicscene import JGraphicScene
-from pprint import pprint
-import json
+
+logger = logging.getLogger(__name__)
 
 
 class JSceneManager:
@@ -47,6 +51,7 @@ class JSceneManager:
         self.graphicsScene.addItem(node3)
 
     def Serialize(self) -> Dict:
+        logger.info("serializing")
         node: List[Dict] = []
         edge: List[Dict] = []
         for item in self._graphicsScene.items():
@@ -57,51 +62,48 @@ class JSceneManager:
         return {"nodes": node, "edges": edge}
 
     def Deserialize(self, data: Dict):
+        logger.info("deserializing")
         self._graphicsScene.clear()
         for node in data["nodes"]:
             instanceNode = JGraphicNode.Deserialize(node)
             self._graphicsScene.addItem(instanceNode)
 
         for edge in data["edges"]:
-            nodes = list(
-                filter(
-                    lambda x: x.nodeIdentifier  # type:ignore
-                    in [edge["sourceNodePID"], edge["destinationNodePID"]],
-                    list(
-                        filter(
-                            lambda item: isinstance(item, JGraphicNode),
-                            self._graphicsScene.items(),
-                        )
-                    ),
-                )
-            )
-            assert len(nodes) == 2
-            startSocket = None
-            destinationSocket = None
-            for node in nodes:
-                assert isinstance(node, JGraphicNode)
-                if node.nodeIdentifier == edge["sourceNodePID"]:
-                    startSocket = node.socketManager.GetSocketByIndex(
-                        edge["sourceNodeIndex"]
-                    )
-                if node.nodeIdentifier == edge["destinationNodePID"]:
-                    destinationSocket = node.socketManager.GetSocketByIndex(
-                        edge["destinationNodeIndex"]
-                    )
+            edgeId = edge["edgeId"]
+            sourceSocketId = edge["sourceSocketId"]
+            desitnationSocketId = edge["desitnationSocketId"]
 
-            self._graphicsScene.addItem(
-                JGraphicEdge.Deserialize(
-                    identifier=edge["identifier"],
-                    startSocket=startSocket,
-                    destinationSocket=destinationSocket,
+            sourceSocket: Optional[JGraphicSocket] = None
+            destinationSocket: Optional[JGraphicSocket] = None
+
+            for socket in list(
+                filter(
+                    lambda socket_: isinstance(socket_, JGraphicSocket),
+                    self._graphicsScene.items(),
                 )
+            ):
+                assert isinstance(socket, JGraphicSocket)
+                if socket.socketId == sourceSocketId:
+                    sourceSocket = socket
+                elif socket.socketId == desitnationSocketId:
+                    destinationSocket = socket
+
+            assert sourceSocket, logger.error("source socket not found")
+            assert destinationSocket, logger.error("destination socket not found")
+
+            instanceEdge = JGraphicEdge.Deserialize(
+                edgeId, sourceSocket, destinationSocket
             )
+
+            self._graphicsScene.addItem(instanceEdge)
 
     def SaveToFile(self):
+        logger.debug("saving to file")
         with open("graph.json", "w") as file:
             json.dump(obj=self.Serialize(), fp=file)
 
     def LoadFromFile(self) -> Dict:
+        logger.debug("loading from file")
         with open("graph.json", "r") as file:
             data = json.load(file)
             return data

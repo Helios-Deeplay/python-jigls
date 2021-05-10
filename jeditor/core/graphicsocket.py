@@ -17,24 +17,24 @@ from .constants import (
     GRSOCKET_RADIUS,
     GRSOCKET_WIDTH_OUTLINE,
 )
-from .graphicedge import JGraphicEdge
 
 logger = logging.getLogger(__name__)
-if TYPE_CHECKING:
-    from .graphicnode import JGraphicNode
 
 
 class JGraphicSocket(QGraphicsItem):
     def __init__(
         self,
-        parent: "JGraphicNode",
+        parent: QGraphicsItem,
+        nodeId: str,
+        socketId: str,
         index: int,
         socketType: int,
         multiConnection: bool = True,
     ) -> None:
         super().__init__(parent=parent)
 
-        self.parentNodeID: str = parent.nodeIdentifier
+        self.nodeId: str = nodeId
+        self.socketId: str = socketId
         self.index: int = index
         self.socketType: int = socketType
         self._multiConnection: bool = multiConnection
@@ -49,10 +49,11 @@ class JGraphicSocket(QGraphicsItem):
         self._brushSocket = QtGui.QBrush(self._colorBackground)
         self._penOutline.setWidthF(GRSOCKET_WIDTH_OUTLINE)
         self._colorHover = QtGui.QColor(GRSOCKET_COLOR_HOVER)
-        self._edgeList: Set[Optional[JGraphicEdge]] = set()
         self.setZValue(1)
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
         self.setAcceptHoverEvents(True)
+
+        self._edgeList: Set[str] = set()
 
     def paint(
         self,
@@ -93,25 +94,25 @@ class JGraphicSocket(QGraphicsItem):
         return self._multiConnection
 
     @property
-    def edgeList(self) -> List[Optional[JGraphicEdge]]:
+    def edgeList(self) -> List[str]:
         return list(self._edgeList)
 
-    def AddEdge(self, edge: JGraphicEdge) -> None:
+    def ConnectEdge(self, edge: str) -> None:
         assert edge is not None
-        assert not self.AtMaxEdgeLimit(), logger.warning("max edge limit reached")
+        assert not self.AtMaxLimit(), logger.warning("max edge limit reached")
         self._edgeList.add(edge)
 
-    def RemoveEdge(self, edge: JGraphicEdge):
+    def DisconnectEdge(self, edge: str):
         self._edgeList.discard(edge)
 
     def EdgeCount(self) -> int:
         return len(self._edgeList)
 
-    def HasEdge(self, edge: JGraphicEdge) -> bool:
+    def HasEdge(self, edge: str) -> bool:
         assert edge is not None
         return True if edge in self._edgeList else False
 
-    def AtMaxEdgeLimit(self) -> bool:
+    def AtMaxLimit(self) -> bool:
         if self._multiConnection:
             return False
         # * can add one edge to single connection type

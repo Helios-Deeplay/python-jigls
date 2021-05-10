@@ -38,17 +38,19 @@ class JGraphicNode(QGraphicsItem):
     def __init__(
         self,
         parent: Optional[QGraphicsItem] = None,
-        nodeContent: Optional[JNodeContent] = None,
+        nodeId: str = "",
         title: str = "Base Node",
-        identifier: str = "",
+        nodeContent: Optional[JNodeContent] = None,
     ) -> None:
         super().__init__(parent=parent)
 
-        self._nodeContent: Optional[JNodeContent] = nodeContent
+        self._nodeId: str = nodeId
         self._nodeTitle: str = title
-        self._nodeIdentifier: str = identifier
+        self._nodeContent: Optional[JNodeContent] = nodeContent
 
-        self._nodeSocketManager: JNodeSocketManager = JNodeSocketManager(self)
+        self._nodeSocketManager: JNodeSocketManager = JNodeSocketManager(
+            self, self._nodeId
+        )
         self._nodeTitleText: QGraphicsTextItem = QGraphicsTextItem(self)
 
         self.initUI()
@@ -73,7 +75,7 @@ class JGraphicNode(QGraphicsItem):
 
     @property
     def nodeIdentifier(self):
-        return self._nodeIdentifier
+        return self._nodeId
 
     @property
     def socketManager(self) -> JNodeSocketManager:
@@ -220,7 +222,7 @@ class JGraphicNode(QGraphicsItem):
 
         node = OrderedDict(
             {
-                "identifier": self._nodeIdentifier,
+                "nodeId": self._nodeId,
                 "posX": self.pos().x(),
                 "posY": self.pos().y(),
             }
@@ -240,12 +242,14 @@ class JGraphicNode(QGraphicsItem):
         #         "1": {"socketType": 2, "multiConnection": false},
         #     },
         # },
-        instance = cls(identifier=data["identifier"])
+        instance = cls(nodeId=data["nodeId"])
         instance.setPos(QtCore.QPointF(data["posX"], data["posY"]))
-        for _, socket in data["socketData"].items():
-            if socket["socketType"] == GRSOCKET_TYPE_INPUT:
-                instance.socketManager.AddInputSocket(socket["multiConnection"])
-            elif socket["socketType"] == GRSOCKET_TYPE_OUTPUT:
-                instance.socketManager.AddOutputSocket(socket["multiConnection"])
-
+        for _, socket in data["socketInfo"].items():
+            instance.socketManager.AddSocket(
+                socket["socketId"], socket["socketType"], socket["multiConnection"]
+            )
+            # if socket["socketType"] == GRSOCKET_TYPE_INPUT:
+            #     instance.socketManager.AddInputSocket(socket["multiConnection"])
+            # elif socket["socketType"] == GRSOCKET_TYPE_OUTPUT:
+            #     instance.socketManager.AddOutputSocket(socket["multiConnection"])
         return instance
