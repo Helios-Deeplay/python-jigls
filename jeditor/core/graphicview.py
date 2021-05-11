@@ -228,7 +228,7 @@ class JGraphicView(QtWidgets.QGraphicsView):
 
     def keyPressEvent(self, event: QtGui.QKeyEvent) -> None:
         if event.key() == QtCore.Qt.Key_Delete:
-            self._DeleteItemsFromScene()
+            self._DeleteFromScene()
         elif (
             event.key() == QtCore.Qt.Key_S
             and event.modifiers() == QtCore.Qt.ControlModifier
@@ -365,39 +365,46 @@ class JGraphicView(QtWidgets.QGraphicsView):
         self.setCursor(QtCore.Qt.ArrowCursor)
         # logger.debug("reset")
 
-    def _DeleteItemsFromScene(self):
+    def _DeleteFromScene(self):
+
+        if not self.scene().selectedItems():
+            logger.debug("no items to delete")
+            return
 
         edgeList: typing.Set[JGraphicEdge] = set()
         nodeList: typing.Set[JGraphicNode] = set()
 
-        if not self.scene().selectedItems():
-            logger.debug("no items selected")
-            return
-
+        # todo create edge id list and then select items from scene
         for item in self.scene().selectedItems():
             if isinstance(item, JGraphicNode):
                 for socket in item.socketManager.socketList:
-                    for edge in socket.edgeList:
-                        assert isinstance(edge, JGraphicEdge)
-                        edgeList.add(edge)
+                    for edgeId in socket.edgeList:
+                        edgeToBeRemoved = list(
+                            filter(
+                                lambda edge: isinstance(edge, JGraphicEdge)
+                                and edge.edgeId == edgeId,
+                                self.scene().items(),
+                            )
+                        )
+                        assert len(edgeToBeRemoved) > 0
+                        edgeList.add(edgeToBeRemoved[0])  # type:ignore
                 nodeList.add(item)
             elif isinstance(item, JGraphicEdge):
                 edgeList.add(item)
             else:
-                logger.error("unknown item in delete selection")
+                logger.error("unknown item selected in delete")
 
-        for edge in edgeList:
-            self._DeleteEdgeFromScene(edge)
+        raise Exception
+        for edgeId in edgeList:
+            self._DeleteEdgeFromScene(edgeId)
         for node in nodeList:
             self._DeleteNodeFromScene(node)
 
     def _DeleteEdgeFromScene(self, edge: JGraphicEdge):
-        assert isinstance(edge, JGraphicEdge)
         assert edge in self.scene().items()
         edge.DisconnectFromSockets()
         self.scene().removeItem(edge)
 
     def _DeleteNodeFromScene(self, node: JGraphicNode):
-        assert isinstance(node, JGraphicNode)
         assert node in self.scene().items()
         self.scene().removeItem(node)

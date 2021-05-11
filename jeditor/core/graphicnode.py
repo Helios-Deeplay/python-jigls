@@ -232,24 +232,10 @@ class JGraphicNode(QGraphicsItem):
 
     @classmethod
     def Deserialize(cls, data: Dict):
-        # {
-        #     "identifier": "5eb8ef4a30554f26901b47d0e1639e3c",
-        #     "posX": 384.0,
-        #     "posY": -147.0,
-        #     "socketCount": 2,
-        #     "socketData": {
-        #         "0": {"socketType": 1, "multiConnection": true},
-        #         "1": {"socketType": 2, "multiConnection": false},
-        #     },
-        # },
         instance = cls(nodeId=data["nodeId"])
         instance.setPos(QtCore.QPointF(data["posX"], data["posY"]))
         for _, socket in data["socketInfo"].items():
             instance.socketManager.AddSocket(
                 socket["socketId"], socket["socketType"], socket["multiConnection"]
             )
-            # if socket["socketType"] == GRSOCKET_TYPE_INPUT:
-            #     instance.socketManager.AddInputSocket(socket["multiConnection"])
-            # elif socket["socketType"] == GRSOCKET_TYPE_OUTPUT:
-            #     instance.socketManager.AddOutputSocket(socket["multiConnection"])
         return instance
