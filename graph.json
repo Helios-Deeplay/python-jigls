@@ -1,1 +1,80 @@
-{"nodes": [{"nodeId": "953c444a11894da091213cf0d6486bc4", "posX": -585.9843749999999, "posY": -498.6718749999999, "socketCount": 2, "socketInfo": {"0": {"socketId": "c3bb5f87893349498cb2bad651a39cc4", "socketType": 1, "multiConnection": false}, "1": {"socketId": "e7bd0f9ec1c24a7abf49e1468c1a50d1", "socketType": 2, "multiConnection": false}}}, {"nodeId": "8e0f050ef78140618ec9b04859db7550", "posX": -159.4687499999999, "posY": 198.14062500000006, "socketCount": 2, "socketInfo": {"0": {"socketId": "83695d7f44cf40918509f6250329a80d", "socketType": 1, "multiConnection": true}, "1": {"socketId": "4a5c2a6d38634466b64e8fdab646e563", "socketType": 2, "multiConnection": true}}}, {"nodeId": "4b7af7c3a59546aba39fe95cfc45b957", "posX": 72.67390441894554, "posY": -396.4281463623046, "socketCount": 2, "socketInfo": {"0": {"socketId": "be2af47a396542ce8dc2a0e69544c346", "socketType": 1, "multiConnection": true}, "1": {"socketId": "567cc31965764661b392e53e2c770d06", "socketType": 2, "multiConnection": false}}}], "edges": [{"edgeId": "05994b85fd9546cabfa803e27f6d6c98", "sourceSocketId": "4a5c2a6d38634466b64e8fdab646e563", "desitnationSocketId": "be2af47a396542ce8dc2a0e69544c346"}, {"edgeId": "35bddb1a2fe34355b22df161b820f214", "sourceSocketId": "e7bd0f9ec1c24a7abf49e1468c1a50d1", "desitnationSocketId": "83695d7f44cf40918509f6250329a80d"}, {"edgeId": "d485f807638c46d7a3acb981b405b03c", "sourceSocketId": "567cc31965764661b392e53e2c770d06", "desitnationSocketId": "83695d7f44cf40918509f6250329a80d"}, {"edgeId": "971fc9a22e414edd83b9475115da2c5e", "sourceSocketId": "4a5c2a6d38634466b64e8fdab646e563", "desitnationSocketId": "c3bb5f87893349498cb2bad651a39cc4"}]}
+{
+    "nodes": [
+        {
+            "nodeId": "ba4995ce922c49a89083414139679595",
+            "posX": 89.0,
+            "posY": -88.0,
+            "socketCount": 2,
+            "socketInfo": {
+                "0": {
+                    "socketId": "f427dfc525864d81b786fc39d0daf276",
+                    "socketType": 1,
+                    "multiConnection": false
+                },
+                "1": {
+                    "socketId": "3aa7293a295c46acb9ddd09033d19662",
+                    "socketType": 2,
+                    "multiConnection": false
+                }
+            }
+        },
+        {
+            "nodeId": "82d256bd43724bfa91e6091802f14d68",
+            "posX": 622.0,
+            "posY": -130.0,
+            "socketCount": 2,
+            "socketInfo": {
+                "0": {
+                    "socketId": "a01d761382bd4c1091e4ed0a97706ded",
+                    "socketType": 1,
+                    "multiConnection": true
+                },
+                "1": {
+                    "socketId": "eb6901d51b364b48b6f70e4b8d338b79",
+                    "socketType": 2,
+                    "multiConnection": false
+                }
+            }
+        },
+        {
+            "nodeId": "48555249db9244a388445411dbe04e33",
+            "posX": 250.0,
+            "posY": 347.0,
+            "socketCount": 2,
+            "socketInfo": {
+                "0": {
+                    "socketId": "4f368b401ac34fd081f243d48a87710d",
+                    "socketType": 1,
+                    "multiConnection": true
+                },
+                "1": {
+                    "socketId": "e1c0964dc9034bfca4fe6c05fb7342a1",
+                    "socketType": 2,
+                    "multiConnection": true
+                }
+            }
+        }
+    ],
+    "edges": [
+        {
+            "edgeId": "b6577ca8e88a4d86874298d82a18b777",
+            "sourceSocketId": "3aa7293a295c46acb9ddd09033d19662",
+            "desitnationSocketId": "a01d761382bd4c1091e4ed0a97706ded"
+        },
+        {
+            "edgeId": "2023911e1b5a4b7a82a91640f1c64261",
+            "sourceSocketId": "e1c0964dc9034bfca4fe6c05fb7342a1",
+            "desitnationSocketId": "f427dfc525864d81b786fc39d0daf276"
+        },
+        {
+            "edgeId": "1a598dc23051433f8f57902434230be6",
+            "sourceSocketId": "e1c0964dc9034bfca4fe6c05fb7342a1",
+            "desitnationSocketId": "a01d761382bd4c1091e4ed0a97706ded"
+        },
+        {
+            "edgeId": "22b0b5875b14430691f8e1e4fc5300a1",
+            "sourceSocketId": "eb6901d51b364b48b6f70e4b8d338b79",
+            "desitnationSocketId": "4f368b401ac34fd081f243d48a87710d"
+        }
+    ]
+}

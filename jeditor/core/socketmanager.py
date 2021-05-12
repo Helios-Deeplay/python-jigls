@@ -3,7 +3,6 @@ import typing
 from collections import OrderedDict
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 import uuid
-
 from PyQt5.QtWidgets import QGraphicsItem
 from PyQt5 import QtCore
 from jeditor.core import graphicnode

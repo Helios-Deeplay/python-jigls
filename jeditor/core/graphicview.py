@@ -1,3 +1,5 @@
+from jeditor.core import graphicscene
+from jeditor.core.commands import EdgeRemoveCommand, NodeRemoveCommand
 import logging
 import typing
 from copy import deepcopy
@@ -125,18 +127,16 @@ class JGraphicView(QtWidgets.QGraphicsView):
             event.button() == QtCore.Qt.LeftButton
             and self._currentState == GRVIEW_OP_MODE_EDGE_DRAG
         ):
-            # logger.debug("pre")
             self._EndEdgeDrag(
                 self.scene().itemAt(self.mapToScene(event.pos()), QtGui.QTransform())
             )
-            # logger.debug("post")
 
         # * debug
         elif event.button() == QtCore.Qt.MidButton:
-            logging.debug("---")
+            logger.debug("items in scene")
             for item in self.scene().items():
                 if isinstance(item, (JGraphicEdge, JGraphicNode, JGraphicSocket)):
-                    logging.debug(item)
+                    logger.debug(item)
 
         super().mousePressEvent(event)
 
@@ -228,7 +228,7 @@ class JGraphicView(QtWidgets.QGraphicsView):
 
     def keyPressEvent(self, event: QtGui.QKeyEvent) -> None:
         if event.key() == QtCore.Qt.Key_Delete:
-            self._DeleteFromScene()
+            self._RemoveFromScene()
         elif (
             event.key() == QtCore.Qt.Key_S
             and event.modifiers() == QtCore.Qt.ControlModifier
@@ -239,6 +239,16 @@ class JGraphicView(QtWidgets.QGraphicsView):
             and event.modifiers() == QtCore.Qt.ControlModifier
         ):
             self._sceneManager.Deserialize(self._sceneManager.LoadFromFile())
+        elif (
+            event.key() == QtCore.Qt.Key_Z
+            and event.modifiers() == QtCore.Qt.ControlModifier
+        ):
+            self._sceneManager.undoStack.undo()
+        elif (
+            event.key() == QtCore.Qt.Key_R
+            and event.modifiers() == QtCore.Qt.ControlModifier
+        ):
+            self._sceneManager.undoStack.redo()
 
         super().keyPressEvent(event)
 
@@ -365,46 +375,87 @@ class JGraphicView(QtWidgets.QGraphicsView):
         self.setCursor(QtCore.Qt.ArrowCursor)
         # logger.debug("reset")
 
-    def _DeleteFromScene(self):
+    def _RemoveFromScene(self):
 
         if not self.scene().selectedItems():
             logger.debug("no items to delete")
             return
 
-        edgeList: typing.Set[JGraphicEdge] = set()
-        nodeList: typing.Set[JGraphicNode] = set()
+        edgeIdRemove: typing.Set[str] = set()
+        nodeIdRemove: typing.Set[str] = set()
 
-        # todo create edge id list and then select items from scene
         for item in self.scene().selectedItems():
             if isinstance(item, JGraphicNode):
+                nodeIdRemove.add(item.nodeId)
                 for socket in item.socketManager.socketList:
-                    for edgeId in socket.edgeList:
-                        edgeToBeRemoved = list(
-                            filter(
-                                lambda edge: isinstance(edge, JGraphicEdge)
-                                and edge.edgeId == edgeId,
-                                self.scene().items(),
-                            )
-                        )
-                        assert len(edgeToBeRemoved) > 0
-                        edgeList.add(edgeToBeRemoved[0])  # type:ignore
-                nodeList.add(item)
+                    edgeIdRemove |= set(socket.edgeList)
             elif isinstance(item, JGraphicEdge):
-                edgeList.add(item)
+                edgeIdRemove.add(item.edgeId)
             else:
                 logger.error("unknown item selected in delete")
 
-        raise Exception
-        for edgeId in edgeList:
-            self._DeleteEdgeFromScene(edgeId)
-        for node in nodeList:
-            self._DeleteNodeFromScene(node)
+        logger.debug(f"nodes marked for removal {nodeIdRemove}")
+        logger.debug(f"edges marked for removal {edgeIdRemove}")
 
-    def _DeleteEdgeFromScene(self, edge: JGraphicEdge):
-        assert edge in self.scene().items()
-        edge.DisconnectFromSockets()
-        self.scene().removeItem(edge)
+        # * first always remove edges, easier to implement undo stack!
+        self._RemoveEdgesFromScene(edgeIdRemove)
+        self._RemoveNodesFromScene(nodeIdRemove)
 
-    def _DeleteNodeFromScene(self, node: JGraphicNode):
-        assert node in self.scene().items()
-        self.scene().removeItem(node)
+    def _RemoveNodesFromScene(self, nodes: typing.Set[str]):
+        for node in nodes:
+            self._RemoveNodeFromScene(node)
+
+    def _RemoveEdgesFromScene(self, edges: typing.Set[str]):
+        for edge in edges:
+            self._RemoveEdgeFromScene(edge)
+
+    def _RemoveNodeFromScene(self, nodeId: str):
+        node_ = list(
+            filter(
+                lambda node: isinstance(node, JGraphicNode) and node.nodeId == nodeId,
+                self.scene().items(),
+            )
+        )
+        assert len(node_) == 1, logger.error(
+            f"error fetching node {nodeId} for removal"
+        )
+
+        node__ = node_[0]
+        assert isinstance(node__, JGraphicNode)
+        self.scene().removeItem(node__)
+
+        logger.debug(f"remove node {nodeId}")
+        self._sceneManager.undoStack.beginMacro("remove node")
+        self._sceneManager.undoStack.push(
+            NodeRemoveCommand(
+                graphicScene=self._sceneManager.graphicsScene, node=node__
+            )
+        )
+        self._sceneManager.undoStack.endMacro()
+
+    def _RemoveEdgeFromScene(self, edgeId: str):
+        edge_ = list(
+            filter(
+                lambda edge: isinstance(edge, JGraphicEdge) and edge.edgeId == edgeId,
+                self.scene().items(),
+            )
+        )
+        assert len(edge_) == 1, logger.error(
+            f"error fetching node {edgeId} for removal"
+        )
+
+        edge__ = edge_[0]
+        assert isinstance(edge__, JGraphicEdge)
+
+        edge__.DisconnectFromSockets()
+
+        logger.debug(f"remove edge {edgeId}")
+        self.scene().removeItem(edge__)
+
+        self._sceneManager.undoStack.beginMacro("remove edge")
+        self._sceneManager.undoStack.push(
+            EdgeRemoveCommand(
+                graphicScene=self._sceneManager.graphicsScene, edge=edge__
+            )
+        )
+        self._sceneManager.undoStack.endMacro()

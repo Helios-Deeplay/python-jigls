@@ -1,9 +1,12 @@
 
 09-05-2021:
   tasks:
+    ☐ refactor nodeId, edgeId, socketId to just Id
     ☐ implement cut copy paste
-    ☐ implement undostack
+    ✔ implement undostack @started(11-05-2021 18:44) @done(11-05-2021 22:41) @lasted(3h57m52s)
     ✔ implement edge id @done(09-05-2021 20:03)
+    ☐ implement undo for change in positions of nodes @low
+    ☐ create base class for all graphicsitems that implements uuid generation @low 
 
   fix:
     ✔ edge and socket were not connected properly @done(09-05-2021 20:03)
@@ -30,4 +33,4 @@
     ✔ dragging edge different style @started(21-05-04 13:33) @done(21-05-04 13:33) @lasted(49s)
   
   fix:
-    ☐ edges use sockets parentID type to check condition if connecting to same parent or duplicate edges
+    ✔ edges use sockets parentID type to check condition if connecting to same parent or duplicate edges @done(11-05-2021 22:42)

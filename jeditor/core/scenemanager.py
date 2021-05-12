@@ -1,13 +1,11 @@
-from jeditor.core.graphicsocket import JGraphicSocket
 import json
 import logging
 from typing import Dict, List, Optional
 
-from jeditor.core.graphicedge import JGraphicEdge
-from jeditor.core.nodefactory import JNodeFactory
 from jeditor.logger import logger
+from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtCore import QPointF
-
+from PyQt5.QtWidgets import QUndoStack
 from .constants import (
     GREDGE_PATH_BEZIER,
     GRSCENE_HEIGHT,
@@ -15,26 +13,33 @@ from .constants import (
     GRSOCKET_TYPE_INPUT,
     GRSOCKET_TYPE_OUTPUT,
 )
+from .graphicedge import JGraphicEdge
 from .graphicnode import JGraphicNode
 from .graphicscene import JGraphicScene
+from .graphicsocket import JGraphicSocket
+from .nodefactory import JNodeFactory
 
 logger = logging.getLogger(__name__)
 
 
-class JSceneManager:
+class JSceneManager(QtCore.QObject):
     def __init__(self) -> None:
+        super().__init__(parent=None)
 
-        self.initUI()
-        self._debug()
-
-    def initUI(self):
         self._graphicsScene = JGraphicScene()
         self._nodeFactory = JNodeFactory()
+        self._undoStack = QUndoStack(self._graphicsScene)
         self._graphicsScene.SetGraphicsSceneWH(GRSCENE_WIDTH, GRSCENE_HEIGHT)
 
+        self._debug()
+
     @property
-    def graphicsScene(self):
+    def graphicsScene(self) -> JGraphicScene:
         return self._graphicsScene
+
+    @property
+    def undoStack(self) -> QUndoStack:
+        return self._undoStack
 
     def _debug(self):
         node1 = self._nodeFactory.CreateNode(None, False, False)
@@ -107,3 +112,15 @@ class JSceneManager:
         with open("graph.json", "r") as file:
             data = json.load(file)
             return data
+
+    def AddNode(self):
+        pass
+
+    def RemoveNode(self):
+        pass
+
+    def AddEdge(self):
+        pass
+
+    def RemoveEdge(self):
+        pass

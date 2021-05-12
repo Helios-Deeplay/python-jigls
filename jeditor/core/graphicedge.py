@@ -143,6 +143,12 @@ class JGraphicEdge(QGraphicsPathItem):
         if self._destinationSocket is not None:
             self._destinationSocket.DisconnectEdge(self._edgeId)
 
+    def ReconnectToSockets(self):
+        """to help assist with undostack when re-inserting edge"""
+        self._startSocket.ConnectEdge(self._edgeId)
+        if self._destinationSocket is not None:
+            self._destinationSocket.ConnectEdge(self._edgeId)
+
     def UpdatePath(self, *args, **kwargs):
         if self.edgePathType == GREDGE_PATH_DIRECT:
             self.setPath(

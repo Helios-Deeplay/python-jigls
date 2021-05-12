@@ -1,6 +1,5 @@
 import logging
 from pprint import pprint
-import typing
 from .socketmanager import JNodeSocketManager
 from .contentwidget import JNodeContent
 from .constants import (
@@ -74,7 +73,7 @@ class JGraphicNode(QGraphicsItem):
         self._nodeTitleText.setPlainText(value)
 
     @property
-    def nodeIdentifier(self):
+    def nodeId(self):
         return self._nodeId
 
     @property
