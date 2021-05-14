@@ -9,19 +9,7 @@ from jeditor.core import graphicnode
 from jeditor.logger import logger
 from PyQt5.QtCore import QPointF
 
-from .constants import (
-    GRNODE_EDGE_SIZE,
-    GRNODE_NODE_HEIGHT,
-    GRNODE_NODE_WIDHT,
-    GRNODE_TITLE_HEIGHT,
-    GRNODE_TITLE_PADDING,
-    GRSOCKET_POS_LEFT_BOTTOM,
-    GRSOCKET_POS_RIGHT_BOTTOM,
-    GRSOCKET_POS_RIGHT_TOP,
-    GRSOCKET_SPACING,
-    GRSOCKET_TYPE_INPUT,
-    GRSOCKET_TYPE_OUTPUT,
-)
+from .constants import JCONSTANTS
 from .graphicsocket import JGraphicSocket
 
 if TYPE_CHECKING:
@@ -65,6 +53,7 @@ class JNodeSocketManager:
         return self._socketCount
 
     def GetSocketByIndex(self, index: int) -> JGraphicSocket:
+        assert index <= len(self._inSocketsList) + len(self._outSocketsList)
         return list(self._inSocketsList + self._outSocketsList)[index]
 
     def GetSocketById(self, socketId: str) -> Optional[JGraphicSocket]:
@@ -86,11 +75,11 @@ class JNodeSocketManager:
         if socketId is None:
             socketId = uuid.uuid4().hex
 
-        if type == GRSOCKET_TYPE_INPUT:
+        if type == JCONSTANTS.GRSOCKET.TYPE_INPUT:
             return self.AddInputSocket(
                 socketId=socketId, multiConnection=multiConnection
             )
-        elif type == GRSOCKET_TYPE_OUTPUT:
+        elif type == JCONSTANTS.GRSOCKET.TYPE_OUTPUT:
             return self.AddOutputSocket(
                 socketId=socketId, multiConnection=multiConnection
             )
@@ -101,7 +90,7 @@ class JNodeSocketManager:
         self,
         socketId: str = None,
         multiConnection: bool = True,
-        position=GRSOCKET_POS_LEFT_BOTTOM,
+        position=JCONSTANTS.GRSOCKET.POS_LEFT_BOTTOM,
     ) -> int:
 
         if socketId is None:
@@ -112,7 +101,7 @@ class JNodeSocketManager:
             nodeId=self._nodeId,
             socketId=socketId,
             index=self._socketCount,
-            socketType=GRSOCKET_TYPE_INPUT,
+            socketType=JCONSTANTS.GRSOCKET.TYPE_INPUT,
             multiConnection=multiConnection,
         )
 
@@ -126,7 +115,7 @@ class JNodeSocketManager:
         self,
         socketId: str,
         multiConnection: bool = True,
-        position=GRSOCKET_POS_RIGHT_TOP,
+        position=JCONSTANTS.GRSOCKET.POS_RIGHT_TOP,
     ) -> int:
 
         socket = JGraphicSocket(
@@ -134,7 +123,7 @@ class JNodeSocketManager:
             nodeId=self._nodeId,
             socketId=socketId,
             index=self._socketCount,
-            socketType=GRSOCKET_TYPE_OUTPUT,
+            socketType=JCONSTANTS.GRSOCKET.TYPE_OUTPUT,
             multiConnection=multiConnection,
         )
 
@@ -150,16 +139,30 @@ class JNodeSocketManager:
         x = 0
 
         # * right posiition
-        if position in [GRSOCKET_POS_RIGHT_BOTTOM, GRSOCKET_POS_RIGHT_TOP]:
-            x = GRNODE_NODE_WIDHT
+        if position in [
+            JCONSTANTS.GRSOCKET.POS_RIGHT_BOTTOM,
+            JCONSTANTS.GRSOCKET.POS_RIGHT_TOP,
+        ]:
+            x = JCONSTANTS.GRNODE.NODE_WIDHT
 
         # * top position
-        vertPadding = GRNODE_TITLE_HEIGHT + GRNODE_TITLE_PADDING + GRNODE_EDGE_SIZE
-        y = vertPadding + index * GRSOCKET_SPACING
+        vertPadding = (
+            JCONSTANTS.GRNODE.TITLE_HEIGHT
+            + JCONSTANTS.GRNODE.TITLE_PADDING
+            + JCONSTANTS.GRNODE.NODE_PADDING
+        )
+        y = vertPadding + index * JCONSTANTS.GRSOCKET.SPACING
 
         # * bottom position
-        if position in [GRSOCKET_POS_LEFT_BOTTOM, GRSOCKET_POS_RIGHT_BOTTOM]:
-            y = GRNODE_NODE_HEIGHT - vertPadding - index * GRSOCKET_SPACING
+        if position in [
+            JCONSTANTS.GRSOCKET.POS_LEFT_BOTTOM,
+            JCONSTANTS.GRSOCKET.POS_RIGHT_BOTTOM,
+        ]:
+            y = (
+                JCONSTANTS.GRNODE.NODE_HEIGHT
+                - vertPadding
+                - index * JCONSTANTS.GRSOCKET.SPACING
+            )
 
         return QPointF(x, y)
 

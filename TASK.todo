@@ -3,6 +3,7 @@
   tasks:
     ☐ refactor nodeId, edgeId, socketId to just Id
     ☐ implement cut copy paste
+    ✔ implement editor window and simple menu boilerplate @started(13-05-2021 15:26) @done(13-05-2021 23:38) @lasted(8h12m21s)
     ✔ implement undostack @started(11-05-2021 18:44) @done(11-05-2021 22:41) @lasted(3h57m52s)
     ✔ implement edge id @done(09-05-2021 20:03)
     ☐ implement undo for change in positions of nodes @low
@@ -34,3 +35,5 @@
   
   fix:
     ✔ edges use sockets parentID type to check condition if connecting to same parent or duplicate edges @done(11-05-2021 22:42)
+
+Archive:

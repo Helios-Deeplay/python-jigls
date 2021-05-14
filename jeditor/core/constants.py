@@ -1,73 +1,71 @@
-# ===SCENE===
-GRSCENE_BACKGROUND_COLOR = "#393939"
-GRSCENE_WIDTH = 64000
-GRSCENE_HEIGHT = 64000
-GRSCENE_GRID_SIZE = 20
-GRSCENE_LINE_SPACING = 5
-GRSCENE_MAJOR_LINE_COLOR = "292929"
-GRSCENE_MINOR_LINE_COLOR = "2f2f2f"
-GRSCENE_MAJOR_LINE_PEN_WIDTH = 2
-GRSCENE_MINOR_LINE_PEN_WIDTH = 1
-GRSCENE_GRID_LINES = False
+class JCONSTANTS:
+    class EDITOR:
+        WIDTH: int = 800
+        HEIGHT: int = 600
+        TITLE: str = "J-Editor"
 
-# ===VIEW===
-# * Qt.ScrollBarPolicy 1 OFF 2 ONE
-GRVIEW_VERT_SCROLLBAR = 1
-GRVIEW_HORZ_SCROLLBAR = 1
-GRVIEW_ZOOM_IN_FACTOR = 1.25
-GRVIEW_ZOOM_CLAMPED = True
-GRVIEW_ZOOM = 10
-GRVIEW_ZOOM_STEP = 1
-GRVIEW_ZOOM_RANGE_MIN = 0
-GRVIEW_ZOOM_RANGE_MAX = 10
-GRVIEW_OP_MODE_DEFAULT = 0
-GRVIEW_OP_MODE_PAN_VIEW = 1
-GRVIEW_OP_MODE_SELECTION = 2
-GRVIEW_OP_MODE_EDGE_DRAG = 3
+    class GRSCENE:
+        BACKGROUND_COLOR: str = "#393939"
+        WIDTH: int = 64000
+        HEIGHT: int = 64000
+        GRID_SIZE: int = 20
+        LINE_SPACING: int = 5
+        MAJOR_LINE_COLOR: str = "292929"
+        MINOR_LINE_COLOR: str = "2f2f2f"
+        MAJOR_LINE_PEN_WIDTH: int = 2
+        MINOR_LINE_PEN_WIDTH: int = 1
+        GRID_LINES: bool = False
 
+    class GRVIEW:
+        # * Qt.ScrollBarPolicy 1 OFF 2 ON
+        VERT_SCROLLBAR: int = 1
+        HORZ_SCROLLBAR: int = 1
+        ZOOM_IN_FACTOR: float = 1.25
+        ZOOM_CLAMPED: bool = True
+        ZOOM: int = 10
+        ZOOM_STEP: int = 1
+        ZOOM_RANGE_MIN: int = 0
+        ZOOM_RANGE_MAX: int = 10
+        OP_MODE_DEFAULT: int = 0
+        OP_MODE_PAN_VIEW: int = 1
+        OP_MODE_SELECTION: int = 2
+        OP_MODE_EDGE_DRAG: int = 3
 
-# ===NODE===
-# https://www.w3schools.com/colors/colors_picker.asp
-GRNODE_TITLE_COLOR = "#ffffff"
-GRNODE_TITLE_FONT = "Ubuntu"
-GRNODE_TITLE_FONT_SIZE = 10
-GRNODE_TITLE_HEIGHT = 24.0
-GRNODE_TITLE_PADDING = 4
-GRNODE_NODE_WIDHT = 240
-GRNODE_NODE_HEIGHT = 180
-GRNODE_EDGE_SIZE = 9
-GRNODE_COLOR_DEFAULT = "#000000"
-GRNODE_COLOR_SELECTED = "#00ff00"
-GRNODE_COLOR_TITLE = "#99cc00"
-GRNODE_COLOR_BACKGROUND = "#E3232323"
+    class GRNODE:
+        # https://www.w3schools.com/colors/colors_picker.asp
+        TITLE_COLOR: str = "#ffffff"
+        TITLE_FONT: str = "Ubuntu"
+        TITLE_FONT_SIZE: int = 10
+        TITLE_HEIGHT: float = 24.0
+        TITLE_PADDING: int = 4
+        NODE_WIDHT: int = 240
+        NODE_HEIGHT: int = 180
+        NODE_PADDING: int = 9
+        COLOR_DEFAULT: str = "#000000"
+        COLOR_SELECTED: str = "#00ff00"
+        COLOR_TITLE: str = "#99cc00"
+        COLOR_BACKGROUND: str = "#E3232323"
 
-# ===SOCKET===
-GRSOCKET_TYPE_INPUT = 1
-GRSOCKET_TYPE_OUTPUT = 2
-GRSOCKET_RADIUS = 8.0
-GRSOCKET_WIDTH_OUTLINE = 2.0
-GRSOCKET_COLOR_OUTLINE = "#FF000000"
-GRSOCKET_COLOR_BACKGROUND = "#FFFF7700"
-GRSOCKET_COLOR_HOVER = "#00ff80"
-GRSOCKET_POS_LEFT_TOP = 1
-GRSOCKET_POS_LEFT_BOTTOM = 2
-GRSOCKET_POS_RIGHT_TOP = 3
-GRSOCKET_POS_RIGHT_BOTTOM = 4
-GRSOCKET_SPACING = 25
+    class GRSOCKET:
+        TYPE_INPUT: int = 1
+        TYPE_OUTPUT: int = 2
+        RADIUS: float = 8.0
+        WIDTH_OUTLINE: float = 2.0
+        COLOR_OUTLINE: str = "#FF000000"
+        COLOR_BACKGROUND: str = "#FFFF7700"
+        COLOR_HOVER: str = "#00ff80"
+        POS_LEFT_TOP: int = 1
+        POS_LEFT_BOTTOM: int = 2
+        POS_RIGHT_TOP: int = 3
+        POS_RIGHT_BOTTOM: int = 4
+        SPACING: int = 25
 
-
-# ===EDGE===
-GREDGE_COLOR_DEFAULT = "#8BC34A"
-GREDGE_COLOR_SELECTED = "#FF0000"
-GREDGE_COLOR_DRAG = "#F5DD29"
-GREDGE_WIDTH = 3
-GREDGE_PATH_DIRECT = 1
-GREDGE_PATH_SQUARE = 2
-GREDGE_PATH_BEZIER = 3
-GREDGE_PATH_DRAG = 4
-
-
-class DEFAULTS:
-    class Edge:
-
-        path = 4
+    class GREDGE:
+        COLOR_DEFAULT: str = "#8BC34A"
+        COLOR_SELECTED: str = "#FF0000"
+        COLOR_DRAG: str = "#F5DD29"
+        WIDTH: int = 3
+        PATH_DIRECT: int = 1
+        PATH_SQUARE: int = 2
+        PATH_BEZIER: int = 3
+        PATH_DRAG: int = 4

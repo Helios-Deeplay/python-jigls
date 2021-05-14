@@ -6,13 +6,7 @@ from jeditor.logger import logger
 from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtCore import QPointF
 from PyQt5.QtWidgets import QUndoStack
-from .constants import (
-    GREDGE_PATH_BEZIER,
-    GRSCENE_HEIGHT,
-    GRSCENE_WIDTH,
-    GRSOCKET_TYPE_INPUT,
-    GRSOCKET_TYPE_OUTPUT,
-)
+from .constants import JCONSTANTS
 from .graphicedge import JGraphicEdge
 from .graphicnode import JGraphicNode
 from .graphicscene import JGraphicScene
@@ -29,7 +23,9 @@ class JSceneManager(QtCore.QObject):
         self._graphicsScene = JGraphicScene()
         self._nodeFactory = JNodeFactory()
         self._undoStack = QUndoStack(self._graphicsScene)
-        self._graphicsScene.SetGraphicsSceneWH(GRSCENE_WIDTH, GRSCENE_HEIGHT)
+        self._graphicsScene.SetGraphicsSceneWH(
+            JCONSTANTS.GRSCENE.WIDTH, JCONSTANTS.GRSCENE.HEIGHT
+        )
 
         self._debug()
 

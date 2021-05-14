@@ -1,4 +1,5 @@
 # from gui.graphicedge import JigleGraphicEdge
+from PyQt5 import QtGui
 from .graphicnode import JGraphicNode
 from .scenemanager import JSceneManager
 from .graphicview import JGraphicView
@@ -8,7 +9,7 @@ from .graphicscene import JGraphicScene
 from PyQt5 import QtWidgets, QtCore
 
 
-class JEditorWindow(QtWidgets.QWidget):
+class JEditorWidget(QtWidgets.QWidget):
     def __init__(
         self,
         parent=None,
@@ -18,9 +19,6 @@ class JEditorWindow(QtWidgets.QWidget):
         self.initUI()
 
     def initUI(self):
-
-        self.setWindowTitle("JIGLS Editor")
-        self.setGeometry(200, 200, 800, 600)
 
         # * set layout
         self.layout_ = QtWidgets.QVBoxLayout()
@@ -39,5 +37,9 @@ class JEditorWindow(QtWidgets.QWidget):
         return self._sceneManager._graphicsScene
 
     @property
-    def graphicView(self) -> QtWidgets.QGraphicsView:
+    def graphicView(self) -> JGraphicView:
         return self._graphicsView
+
+    @property
+    def sceneManager(self) -> JSceneManager:
+        return self._sceneManager

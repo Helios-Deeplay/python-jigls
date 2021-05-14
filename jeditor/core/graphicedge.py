@@ -14,15 +14,7 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
-from .constants import (
-    GREDGE_COLOR_DEFAULT,
-    GREDGE_COLOR_DRAG,
-    GREDGE_COLOR_SELECTED,
-    GREDGE_PATH_BEZIER,
-    GREDGE_PATH_DIRECT,
-    GREDGE_PATH_SQUARE,
-    GREDGE_WIDTH,
-)
+from .constants import JCONSTANTS
 from .graphicedgepath import JGraphicEdgeBezier, JGraphicEdgeDirect, JGraphicEdgeSquare
 from .graphicsocket import JGraphicSocket
 
@@ -36,7 +28,7 @@ class JGraphicEdge(QGraphicsPathItem):
         startSocket: "JGraphicSocket",
         destinationSocket: Optional["JGraphicSocket"],
         parent: Optional[QGraphicsPathItem] = None,
-        edgePathType: int = GREDGE_PATH_BEZIER,
+        edgePathType: int = JCONSTANTS.GREDGE.PATH_BEZIER,
     ) -> None:
         super().__init__(parent=parent)
 
@@ -111,15 +103,15 @@ class JGraphicEdge(QGraphicsPathItem):
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
         self.setZValue(-1.0)
 
-        self._edgeColor = QtGui.QColor(GREDGE_COLOR_DEFAULT)
-        self._edgeColorSelected = QtGui.QColor(GREDGE_COLOR_SELECTED)
-        self._edgeColorDrag = QtGui.QColor(GREDGE_COLOR_DRAG)
+        self._edgeColor = QtGui.QColor(JCONSTANTS.GREDGE.COLOR_DEFAULT)
+        self._edgeColorSelected = QtGui.QColor(JCONSTANTS.GREDGE.COLOR_SELECTED)
+        self._edgeColorDrag = QtGui.QColor(JCONSTANTS.GREDGE.COLOR_DRAG)
         self._edgePen = QtGui.QPen(self._edgeColor)
         self._edgePenSelected = QtGui.QPen(self._edgeColorSelected)
         self._edgePenDrag = QtGui.QPen(self._edgeColorDrag)
-        self._edgePen.setWidthF(GREDGE_WIDTH)
-        self._edgePenSelected.setWidthF(GREDGE_WIDTH)
-        self._edgePenDrag.setWidthF(GREDGE_WIDTH)
+        self._edgePen.setWidthF(JCONSTANTS.GREDGE.WIDTH)
+        self._edgePenSelected.setWidthF(JCONSTANTS.GREDGE.WIDTH)
+        self._edgePenDrag.setWidthF(JCONSTANTS.GREDGE.WIDTH)
         self._edgePenDrag.setStyle(QtCore.Qt.DashLine)
 
     def paint(
@@ -150,15 +142,15 @@ class JGraphicEdge(QGraphicsPathItem):
             self._destinationSocket.ConnectEdge(self._edgeId)
 
     def UpdatePath(self, *args, **kwargs):
-        if self.edgePathType == GREDGE_PATH_DIRECT:
+        if self.edgePathType == JCONSTANTS.GREDGE.PATH_DIRECT:
             self.setPath(
                 JGraphicEdgeDirect.GetPath(self.sourcePos, self.destinationPos)
             )
-        elif self.edgePathType == GREDGE_PATH_BEZIER:
+        elif self.edgePathType == JCONSTANTS.GREDGE.PATH_BEZIER:
             self.setPath(
                 JGraphicEdgeBezier.GetPath(self.sourcePos, self.destinationPos)
             )
-        elif self.edgePathType == GREDGE_PATH_SQUARE:
+        elif self.edgePathType == JCONSTANTS.GREDGE.PATH_SQUARE:
             self.setPath(
                 JGraphicEdgeSquare.GetPath(self.sourcePos, self.destinationPos)
             )
@@ -183,7 +175,7 @@ class JGraphicEdge(QGraphicsPathItem):
             edgeId=edgeId,
             startSocket=startSocket,
             destinationSocket=destinationSocket,
-            edgePathType=GREDGE_PATH_BEZIER,
+            edgePathType=JCONSTANTS.GREDGE.PATH_BEZIER,
         )
 
     @classmethod
@@ -195,7 +187,7 @@ class JGraphicEdge(QGraphicsPathItem):
             edgeId=edgeId,
             startSocket=startSocket,
             destinationSocket=None,
-            edgePathType=GREDGE_PATH_BEZIER,
+            edgePathType=JCONSTANTS.GREDGE.PATH_BEZIER,
         )
         instanceEdge.DragPos = dragPos
         return instanceEdge

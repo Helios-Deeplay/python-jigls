@@ -10,13 +10,7 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
-from .constants import (
-    GRSOCKET_COLOR_BACKGROUND,
-    GRSOCKET_COLOR_HOVER,
-    GRSOCKET_COLOR_OUTLINE,
-    GRSOCKET_RADIUS,
-    GRSOCKET_WIDTH_OUTLINE,
-)
+from .constants import JCONSTANTS
 
 logger = logging.getLogger(__name__)
 
@@ -42,13 +36,13 @@ class JGraphicSocket(QGraphicsItem):
         self.initUI()
 
     def initUI(self):
-        self._radius = GRSOCKET_RADIUS
-        self._colorOutline = QtGui.QColor(GRSOCKET_COLOR_OUTLINE)
-        self._colorBackground = QtGui.QColor(GRSOCKET_COLOR_BACKGROUND)
+        self._radius = JCONSTANTS.GRSOCKET.RADIUS
+        self._colorOutline = QtGui.QColor(JCONSTANTS.GRSOCKET.COLOR_OUTLINE)
+        self._colorBackground = QtGui.QColor(JCONSTANTS.GRSOCKET.COLOR_BACKGROUND)
         self._penOutline = QtGui.QPen(self._colorOutline)
         self._brushSocket = QtGui.QBrush(self._colorBackground)
-        self._penOutline.setWidthF(GRSOCKET_WIDTH_OUTLINE)
-        self._colorHover = QtGui.QColor(GRSOCKET_COLOR_HOVER)
+        self._penOutline.setWidthF(JCONSTANTS.GRSOCKET.WIDTH_OUTLINE)
+        self._colorHover = QtGui.QColor(JCONSTANTS.GRSOCKET.COLOR_HOVER)
         self.setZValue(1)
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
         self.setAcceptHoverEvents(True)

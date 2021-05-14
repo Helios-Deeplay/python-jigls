@@ -1,15 +1,5 @@
 from typing import List
-from .constants import (
-    GRSCENE_BACKGROUND_COLOR,
-    GRSCENE_GRID_LINES,
-    GRSCENE_GRID_SIZE,
-    GRSCENE_LINE_SPACING,
-    GRSCENE_MAJOR_LINE_COLOR,
-    GRSCENE_MAJOR_LINE_PEN_WIDTH,
-    GRSCENE_MINOR_LINE_COLOR,
-    GRSCENE_MINOR_LINE_PEN_WIDTH,
-    GRSCENE_WIDTH,
-)
+from .constants import JCONSTANTS
 from PyQt5 import QtGui, QtWidgets, QtCore
 import math
 
@@ -33,18 +23,18 @@ class JGraphicScene(QtWidgets.QGraphicsScene):
 
     def _InitVariables(self):
 
-        self._colorBackground = QtGui.QColor(GRSCENE_BACKGROUND_COLOR)
-        self._colorMajorLine = QtGui.QColor(GRSCENE_MAJOR_LINE_COLOR)
-        self._colorMinorLine = QtGui.QColor(GRSCENE_MINOR_LINE_COLOR)
+        self._colorBackground = QtGui.QColor(JCONSTANTS.GRSCENE.BACKGROUND_COLOR)
+        self._colorMajorLine = QtGui.QColor(JCONSTANTS.GRSCENE.MAJOR_LINE_COLOR)
+        self._colorMinorLine = QtGui.QColor(JCONSTANTS.GRSCENE.MINOR_LINE_COLOR)
 
-        self._widhtMajorLine: int = GRSCENE_MAJOR_LINE_PEN_WIDTH
-        self._widhtMinorLine: int = GRSCENE_MINOR_LINE_PEN_WIDTH
+        self._widhtMajorLine: int = JCONSTANTS.GRSCENE.MAJOR_LINE_PEN_WIDTH
+        self._widhtMinorLine: int = JCONSTANTS.GRSCENE.MINOR_LINE_PEN_WIDTH
         self._penMajorLine = QtGui.QPen(self._colorMajorLine)
         self._penMinorLine = QtGui.QPen(self._colorMinorLine)
 
-        self._gridSize: int = GRSCENE_GRID_SIZE
-        self._lineSpacing: int = GRSCENE_LINE_SPACING
-        self._enableGridLines: bool = GRSCENE_GRID_LINES
+        self._gridSize: int = JCONSTANTS.GRSCENE.GRID_SIZE
+        self._lineSpacing: int = JCONSTANTS.GRSCENE.LINE_SPACING
+        self._enableGridLines: bool = JCONSTANTS.GRSCENE.GRID_LINES
 
     def drawBackground(self, painter: QtGui.QPainter, rect: QtCore.QRectF) -> None:
         super().drawBackground(painter, rect)

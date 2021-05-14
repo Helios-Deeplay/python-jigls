@@ -2,22 +2,7 @@ import logging
 from pprint import pprint
 from .socketmanager import JNodeSocketManager
 from .contentwidget import JNodeContent
-from .constants import (
-    GRNODE_COLOR_BACKGROUND,
-    GRNODE_COLOR_DEFAULT,
-    GRNODE_COLOR_SELECTED,
-    GRNODE_COLOR_TITLE,
-    GRNODE_EDGE_SIZE,
-    GRNODE_NODE_HEIGHT,
-    GRNODE_NODE_WIDHT,
-    GRNODE_TITLE_COLOR,
-    GRNODE_TITLE_FONT,
-    GRNODE_TITLE_FONT_SIZE,
-    GRNODE_TITLE_HEIGHT,
-    GRNODE_TITLE_PADDING,
-    GRSOCKET_TYPE_INPUT,
-    GRSOCKET_TYPE_OUTPUT,
-)
+from .constants import JCONSTANTS
 from typing import Dict, List, Optional, OrderedDict, Tuple
 from PyQt5 import QtGui, QtCore
 from PyQt5.QtWidgets import (
@@ -87,30 +72,30 @@ class JGraphicNode(QGraphicsItem):
         self.setFlag(QGraphicsItem.ItemIsFocusable, True)
 
         # * node dimension
-        self._nodeWidth: int = GRNODE_NODE_WIDHT
-        self._nodeHeight: int = GRNODE_NODE_HEIGHT
-        self._nodeEdgeSize: float = GRNODE_EDGE_SIZE
+        self._nodeWidth: int = JCONSTANTS.GRNODE.NODE_WIDHT
+        self._nodeHeight: int = JCONSTANTS.GRNODE.NODE_HEIGHT
+        self._nodeEdgeSize: float = JCONSTANTS.GRNODE.NODE_PADDING
         self._nodePenDefault: QtGui.QPen = QtGui.QPen(
-            QtGui.QColor(GRNODE_COLOR_DEFAULT)
+            QtGui.QColor(JCONSTANTS.GRNODE.COLOR_DEFAULT)
         )
         self._nodePenSelected: QtGui.QPen = QtGui.QPen(
-            QtGui.QColor(GRNODE_COLOR_SELECTED)
+            QtGui.QColor(JCONSTANTS.GRNODE.COLOR_SELECTED)
         )
         self._nodeBrushBackground: QtGui.QBrush = QtGui.QBrush(
-            QtGui.QColor(GRNODE_COLOR_BACKGROUND)
+            QtGui.QColor(JCONSTANTS.GRNODE.COLOR_BACKGROUND)
         )
 
         # * title
         self._nodeTitleColor = QtCore.Qt.black
         self._nodeTitleFont: QtGui.QFont = QtGui.QFont(
-            GRNODE_TITLE_FONT, GRNODE_TITLE_FONT_SIZE
+            JCONSTANTS.GRNODE.TITLE_FONT, JCONSTANTS.GRNODE.TITLE_FONT_SIZE
         )
         self._nodeTitleFont.setItalic(True)
         self._nodeTitleFont.setBold(True)
-        self._nodeTitlePadding: int = GRNODE_TITLE_PADDING
-        self._nodeTitleHeight: float = GRNODE_TITLE_HEIGHT
+        self._nodeTitlePadding: int = JCONSTANTS.GRNODE.TITLE_PADDING
+        self._nodeTitleHeight: float = JCONSTANTS.GRNODE.TITLE_HEIGHT
         self._nodeTitleBrush: QtGui.QBrush = QtGui.QBrush(
-            QtGui.QColor(GRNODE_COLOR_TITLE)
+            QtGui.QColor(JCONSTANTS.GRNODE.COLOR_TITLE)
         )
         self._nodeTitleText.setDefaultTextColor(self._nodeTitleColor)
         self._nodeTitleText.setFont(self._nodeTitleFont)

@@ -1,5 +1,5 @@
 from typing import Optional
-from jeditor.core.constants import GRSOCKET_TYPE_INPUT, GRSOCKET_TYPE_OUTPUT
+from jeditor.core.constants import JCONSTANTS
 from jeditor.core.contentwidget import JNodeContent
 from jeditor.core.graphicnode import JGraphicNode
 import uuid
@@ -29,14 +29,14 @@ class JNodeFactory:
             socketId = uuid.uuid4().hex
             node.socketManager.AddSocket(
                 socketId=socketId,
-                type=GRSOCKET_TYPE_INPUT,
+                type=JCONSTANTS.GRSOCKET.TYPE_INPUT,
                 multiConnection=inputMulti,
             )
         for _ in range(output):
             socketId = uuid.uuid4().hex
             node.socketManager.AddSocket(
                 socketId=socketId,
-                type=GRSOCKET_TYPE_OUTPUT,
+                type=JCONSTANTS.GRSOCKET.TYPE_OUTPUT,
                 multiConnection=outputMulti,
             )
 
